@@ -2,7 +2,7 @@
   <img src="docs/assets/alem-research-banner.png" alt="Alem Research — Research deeper with AI" width="100%">
 </p>
 
-<h1 align="center">Alem Research</h1>
+<h1 align="center">Alem Research🦉</h1>
 
 <p align="center">
   <strong>A local-first, extensible AI research workspace for rigorous and reproducible inquiry.</strong>
