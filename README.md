@@ -151,6 +151,32 @@ Install and enable `org.alem.semantic-scholar` to make the configured fallback a
 sent to external providers are network requests and should not be treated as private local
 processing.
 
+### Plugin catalogue
+
+The checked-in [plugin catalogue](catalogue/index.toml) is the authoritative list of plugins
+available to Alem. Installation and execution always require separate approval.
+
+#### Official plugins
+
+| Plugin | Capability | Description |
+| --- | --- | --- |
+| [`org.alem.openalex`](plugins/official/openalex) | `academic_search` | Search scholarly works through OpenAlex. |
+| [`org.alem.semantic-scholar`](plugins/official/semantic-scholar) | `academic_search` | Search scholarly works through Semantic Scholar. |
+
+#### Community plugins
+
+| Plugin | Capability | Description |
+| --- | --- | --- |
+| [`community.feynman-bridge`](plugins/community/feynman-bridge) | `research_agent` | Workspace-local bridge to the separately installed Feynman research agent. |
+| [`community.orchestra-research-skills`](plugins/community/orchestra-research-skills) | skills | Curated, namespaced research skills from Orchestra Research. |
+| [`community.wenyu-research-catalog`](plugins/community/wenyu-research-catalog) | `research_skill_catalog` | Offline catalog of research skills and runtime requirements. |
+| [`community.awesome-research-tools-catalog`](plugins/community/awesome-research-tools-catalog) | `research_tool_catalog` | Offline discovery catalog of research tools. |
+| [`dev.community.static-search`](examples/plugins/community-static-search) | `academic_search` | Deterministic example plugin used for lifecycle tests and learning. |
+
+Community entries are reviewed contributions, not automatic endorsements. Their permissions,
+dependencies, licenses, privacy behavior, and evidence limitations must be checked before
+enablement.
+
 ### Build a plugin
 
 Create a tested plugin without importing Alem internals:
