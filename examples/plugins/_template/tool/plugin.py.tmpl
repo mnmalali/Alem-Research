@@ -1,0 +1,17 @@
+"""Alem extension API v1 starter."""
+
+from alem.extensions.api import BaseExtension, ExecutionRequest, ExecutionResponse
+
+
+class {{CLASS_NAME}}(BaseExtension):
+    extension_type = "tool"
+
+    def invoke(self, request: ExecutionRequest) -> ExecutionResponse:
+        # Validate all input at the capability boundary. Never fabricate evidence.
+        return ExecutionResponse(
+            {"received": dict(request.input)},
+            {"provider": "{{PLUGIN_ID}}"},
+        )
+
+
+plugin = {{CLASS_NAME}}()

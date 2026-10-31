@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "{{PLUGIN_ID}}"
+name = "{{PLUGIN_NAME}}"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Describe one focused research integration."
+author = "{{AUTHOR}}"
+repository = "{{REPOSITORY}}"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "{{CAPABILITY}}"
+version = "1.0"
+extension_type = "tool"
+priority = 100
+description = "Describe the provider-neutral contract implemented here."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Validate, inspect, then install from this directory with the explicit --approve flag."
+usage = "Enable with a separate --approve flag, then invoke the declared capability."
+
+[assets]
+skills = []
+agents = []
+workflows = []

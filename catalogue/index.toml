@@ -1,0 +1,37 @@
+schema_version = 1
+
+[[plugins]]
+id = "org.alem.openalex"
+version = "0.1.0"
+channel = "official"
+source = "../plugins/official/openalex"
+summary = "Free academic-search provider backed by the OpenAlex Works API."
+author = "Alem Research maintainers"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+extension_types = ["tool"]
+capabilities = ["academic_search"]
+
+[[plugins]]
+id = "org.alem.semantic-scholar"
+version = "0.1.0"
+channel = "official"
+source = "../plugins/official/semantic-scholar"
+summary = "Academic-search provider backed by the Semantic Scholar Academic Graph API."
+author = "Alem Research maintainers"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+extension_types = ["tool"]
+capabilities = ["academic_search"]
+
+[[plugins]]
+id = "dev.community.static-search"
+version = "0.1.0"
+channel = "community"
+source = "../examples/plugins/community-static-search"
+summary = "Deterministic, no-network third-party example for learning and lifecycle tests."
+author = "Example community contributor"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+extension_types = ["tool"]
+capabilities = ["academic_search"]

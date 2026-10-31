@@ -1,0 +1,49 @@
+schema_version: 1
+id: literature-review
+name: Reproducible literature review
+inputs:
+  required:
+    - 01-ideation/candidate-topics.md
+    - 02-gap/gap-assessment.md
+steps:
+  - id: protocol
+    owner: literature-review
+    action: freeze search databases, queries, filters, eligibility, and review type
+    output: 03-literature/search-protocol.md
+    validation: review type is justified and all planned providers are recorded
+  - id: search
+    owner: literature-review
+    capability: academic_search
+    capability_version: "1.0"
+    request:
+      operation: search
+      provider_policy: configured-default-then-fallbacks
+    outputs:
+      - 03-literature/raw/{run_id}/
+      - 03-literature/search-log.csv
+      - 03-literature/records.jsonl
+    validation: raw count, normalized count, deduplicated count, and failures reconcile
+  - id: screen
+    owner: literature-review
+    action: apply frozen eligibility rules and retain exclusion reasons
+    outputs: [04-review/screening-log.csv, 04-review/flow-counts.yaml]
+  - id: extract
+    owner: literature-review
+    capabilities: [paper_metadata, pdf_extract]
+    capability_versions: {paper_metadata: "1.0", pdf_extract: "1.0"}
+    output: 04-review/evidence-table.csv
+    validation: every extraction links to a source id and location or an explicit access limitation
+  - id: synthesize
+    owner: literature-review
+    action: compare evidence quality, agreement, disagreement, and applicability
+    output: 04-review/evidence-synthesis.md
+    validation: each major synthesis claim cites evidence-row ids
+checkpoint:
+  file: STATUS.md
+  on_failure: preserve completed outputs and record provider/error without changing the protocol
+  rerun_policy: create a new run id; never overwrite raw results
+human_gates:
+  - after: protocol
+    id: confirm_review_scope
+  - after: screen
+    id: resolve_ambiguous_exclusions

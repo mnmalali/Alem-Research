@@ -1,0 +1,35 @@
+schema_version: 1
+id: knowledge-update
+name: Controlled shared-knowledge update
+inputs:
+  required:
+    - project evidence identifiers
+    - candidate reusable claims
+steps:
+  - id: read-existing
+    capability: knowledge_read
+    capability_version: "1.0"
+    action: search index and read related pages before proposing changes
+  - id: propose
+    owner: research-director
+    skill: knowledge-management
+    output: 12-knowledge/change-proposal.md
+    required_fields: [claims, evidence_ids, classifications, target_pages, links, contradictions, sensitivity_check]
+  - id: validate-evidence
+    owner: critical-reviewer
+    action: confirm sources and classification for each promoted claim
+    output: 12-knowledge/validation.md
+  - id: apply
+    capability: knowledge_write
+    capability_version: "1.0"
+    action: make minimal additive edits and preserve attributed conflicts
+    outputs: [knowledge pages, knowledge/index.md, knowledge/CHANGELOG.md]
+  - id: inspect-diff
+    action: review changed pages, frontmatter, links, and accidental sensitive content
+    output: 12-knowledge/update-report.md
+rules:
+  create_only_if_no_existing_page: true
+  update_index: true
+  append_changelog: true
+  overwrite_conflicts: false
+  automatic_after_every_interaction: false

@@ -1,0 +1,55 @@
+# Alem runtime: always workspace-local, never committed
+.alem/
+.agents/skills/plugin--*/
+.claude/skills/plugin--*/
+
+# Research projects and exports are private by default
+projects/*
+!projects/.gitkeep
+exports/*
+!exports/.gitkeep
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials*.json
+secrets*.toml
+
+# Research data and documents
+**/03_data/raw/**
+**/03_data/sensitive/**
+**/00_admin/private/**
+*.pdf
+*.docx
+*.xlsx
+*.csv
+*.parquet
+*.sqlite*
+!templates/**/*.csv
+!examples/sample-project/**/*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Notebooks and local tools
+.ipynb_checkpoints/
+.quarto/
+_site/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+~$*

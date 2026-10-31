@@ -1,0 +1,30 @@
+[alem]
+workspace_version = 1
+name = "Alem Research"
+tagline = "Your research. Your knowledge. Your AI research workspace."
+
+[runtime]
+state_directory = ".alem/state"
+cache_directory = ".alem/cache"
+log_directory = ".alem/logs"
+plugin_directory = ".alem/plugins"
+plugin_environment_directory = ".alem/venvs"
+
+[plugins]
+api_version = "1.0"
+catalogues = ["catalogue/index.toml"]
+require_install_approval = true
+require_execution_approval = true
+
+[capabilities.academic_search]
+default = "org.alem.openalex"
+fallbacks = ["org.alem.semantic-scholar"]
+
+[agents]
+canonical_skills = "skills"
+codex_skills = ".agents/skills"
+claude_skills = ".claude/skills"
+
+[privacy]
+telemetry = false
+local_first = true

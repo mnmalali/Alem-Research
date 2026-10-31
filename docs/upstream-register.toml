@@ -1,0 +1,84 @@
+schema_version = 1
+retrieved_at = "2026-10-31"
+retrieval_timezone = "Asia/Dubai"
+policy = "No upstream is a required Alem dependency. Mutable refs are discovery metadata only; revision is the reproducible audit pin."
+
+[[upstreams]]
+id = "karpathy-llm-wiki"
+name = "LLM Wiki"
+kind = "gist"
+repository = "https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f"
+revision = "ac46de1ad27f92b28ac95459c782c07f6b8c964a"
+version = "unversioned"
+license = "NOASSERTION"
+license_url = ""
+relationship = "adapt-pattern"
+redistribution = "reference-only"
+adopt = ["immutable source layer", "derived Markdown wiki", "schema/instructions layer", "ingest-query-lint loop", "index and append-only log"]
+exclude = ["verbatim text", "unlicensed examples", "assumption that Markdown provides evidence verification"]
+source_files = ["llm-wiki.md"]
+notes = "No license was stated. Alem cites the idea and implements it independently."
+
+[[upstreams]]
+id = "companion-feynman"
+name = "Feynman"
+kind = "repository"
+repository = "https://github.com/Companion-Inc/feynman"
+revision = "89b0242919faf89b38dcb6ae8be92f6dbcd77203"
+version = "0.5.61"
+license = "MIT"
+license_url = "https://github.com/Companion-Inc/feynman/blob/89b0242919faf89b38dcb6ae8be92f6dbcd77203/LICENSE"
+relationship = "optional-wrapper"
+redistribution = "not-vendored"
+adopt = ["evidence sidecars", "verifier role separation", "workflow-specific outputs", "failure-aware research adapters"]
+exclude = ["required runtime dependency", "global installer", "Pi internal API as Alem API", "default telemetry assumption"]
+source_files = ["README.md", "LICENSE", "package.json", "AGENTS.md", ".feynman/agents/*.md", "extensions/research-tools/*"]
+notes = "Future integration must be pinned, workspace-local, opt-in, capability-adapted, and disclose upstream telemetry/model requirements."
+
+[[upstreams]]
+id = "orchestra-ai-research-skills"
+name = "AI Research Skills Library"
+kind = "repository"
+repository = "https://github.com/Orchestra-Research/AI-Research-SKILLs"
+revision = "773a52944ba4747a18bd4ae9ade53fff041adcbc"
+version = "1.7.2"
+license = "MIT"
+license_url = "https://github.com/Orchestra-Research/AI-Research-SKILLs/blob/773a52944ba4747a18bd4ae9ade53fff041adcbc/LICENSE"
+relationship = "reference-and-selective-adaptation"
+redistribution = "not-vendored"
+adopt = ["progressive skill disclosure", "frontmatter metadata", "testable workflow checklists", "per-skill quality gates"]
+exclude = ["bulk install", "user-global ~/.orchestra installer", "all-skills default", "host-support claims without smoke tests"]
+source_files = ["README.md", "LICENSE", "CONTRIBUTING.md", "CLAUDE.md", ".claude-plugin/marketplace.json", "packages/ai-research-skills/package.json"]
+notes = "Repository LICENSE and shipped installer are MIT, but root package.json reports ISC; resolve before redistributing root npm package material."
+
+[[upstreams]]
+id = "wenyuchiou-ai-research-skills"
+name = "AI Research Skills"
+kind = "catalog-repository"
+repository = "https://github.com/WenyuChiou/ai-research-skills"
+revision = "8547d889612ca624d523f39d20d35a97dbd87802"
+version = "catalog-1.7.21"
+license = "MIT"
+license_url = "https://github.com/WenyuChiou/ai-research-skills/blob/8547d889612ca624d523f39d20d35a97dbd87802/LICENSE"
+relationship = "adapt-contract-patterns"
+redistribution = "not-vendored"
+adopt = ["durable typed handoffs", "evidence-gap states", "human approval gates", "installed-vs-executable distinction", "honest host compatibility matrix"]
+exclude = ["global Python install", "user-level Claude skill writes", "catalog version as transitive pin", "external plugin trust by association"]
+source_files = ["README.md", "LICENSE", "catalog/skills.yml", "schema/skills-v3.schema.json", "docs/design-philosophy.md", "docs/runtime-contract.md", "docs/install.md", ".claude-plugin/marketplace.json"]
+notes = "The catalog points to separately versioned plugin repositories; each needs its own source and license audit. GitHub latest release lagged catalog metadata at audit time."
+
+[[upstreams]]
+id = "awesome-ai-research-tools"
+name = "Awesome AI Research Tools"
+kind = "curated-list"
+repository = "https://github.com/0x11c11e/awesome-ai-research-tools"
+revision = "1369c3c55e17f37a9abbe7f4ddc5ba2b0636a7f1"
+version = "unversioned"
+license = "CC0-1.0"
+license_url = "https://github.com/0x11c11e/awesome-ai-research-tools/blob/1369c3c55e17f37a9abbe7f4ddc5ba2b0636a7f1/LICENSE"
+relationship = "reference"
+redistribution = "not-vendored"
+adopt = ["candidate discovery", "research-lifecycle categories", "link-health idea"]
+exclude = ["dependency", "security endorsement", "price claim", "third-party license inference"]
+source_files = ["README.md", "contributing.md", "LICENSE", ".github/workflows/link-check.yml"]
+notes = "CC0 covers the list contribution, not linked tools, trademarks, APIs, datasets, or service terms."

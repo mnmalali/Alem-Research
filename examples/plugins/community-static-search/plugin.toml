@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "dev.community.static-search"
+name = "Community Static Search Example"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "A third-party-style example that implements academic_search using only Alem's documented public API."
+author = "Example community contributor"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "academic_search"
+version = "1.0"
+extension_type = "tool"
+priority = 10
+description = "Return a deterministic example record without network access."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Inspect with 'alem plugin install examples/plugins/community-static-search', then rerun with --approve."
+usage = "Run 'alem plugin enable dev.community.static-search --approve', then invoke academic_search with a query."
+
+[assets]
+skills = []
+agents = []
+workflows = []

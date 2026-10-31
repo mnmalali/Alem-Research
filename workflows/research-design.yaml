@@ -1,0 +1,34 @@
+schema_version: 1
+id: research-design
+name: Approved question to research protocol
+inputs:
+  required:
+    - 05-question/research-question.md
+    - 04-review/evidence-synthesis.md
+steps:
+  - id: alternatives
+    owner: research-methodology
+    skill: research-design
+    action: compare viable designs for validity, ethics, feasibility, data access, and question fit
+    output: 06-methodology/design-options.md
+  - id: protocol
+    owner: research-methodology
+    action: specify population, constructs, sampling, procedures, outcomes, bias controls, missingness, ethics, and stop rules
+    output: 06-methodology/protocol.md
+  - id: analysis-plan
+    owner: research-methodology
+    capabilities: [power_analysis, method_reference]
+    capability_versions: {power_analysis: "1.0", method_reference: "1.0"}
+    output: 06-methodology/analysis-plan.md
+  - id: independent-review
+    owner: critical-reviewer
+    capability: artifact_validate
+    capability_version: "1.0"
+    output: 06-methodology/protocol-review.md
+human_gates:
+  - after: independent-review
+    id: approve_methodology
+    required_before: [data_collection, dataset_acquisition, confirmatory_experiments]
+resume:
+  state_file: STATUS.md
+  invalidate_downstream_on_protocol_change: true

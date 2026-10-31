@@ -1,0 +1,82 @@
+schema_version = 1
+
+[[integrations]]
+id = "openalex"
+capability = "academic_search"
+status = "bundled-plugin"
+cost = "free-service"
+authentication = "none"
+privacy = "Search queries and request metadata are sent to api.openalex.org."
+notes = "Public API rate limits and polite-pool guidance apply."
+
+[[integrations]]
+id = "semantic-scholar"
+capability = "academic_search"
+status = "bundled-plugin"
+cost = "free-service"
+authentication = "optional API key"
+privacy = "Search queries and request metadata are sent to api.semanticscholar.org."
+notes = "Works without a key at lower limits; obey service rate limits."
+
+[[integrations]]
+id = "crossref"
+capability = "paper_metadata"
+status = "planned"
+cost = "free-service"
+authentication = "none"
+privacy = "Metadata queries will be sent to api.crossref.org when enabled."
+notes = "Not implemented in v0.1."
+
+[[integrations]]
+id = "arxiv"
+capability = "preprint_search"
+status = "planned"
+cost = "free-service"
+authentication = "none"
+privacy = "Queries will be sent to export.arxiv.org when enabled."
+notes = "Not implemented in v0.1."
+
+[[integrations]]
+id = "pubmed"
+capability = "biomedical_search"
+status = "planned"
+cost = "free-service"
+authentication = "optional API key"
+privacy = "Queries will be sent to NCBI when enabled."
+notes = "Not implemented in v0.1."
+
+[[integrations]]
+id = "europe-pmc"
+capability = "biomedical_search"
+status = "planned"
+cost = "free-service"
+authentication = "none"
+privacy = "Queries will be sent to Europe PMC when enabled."
+notes = "Not implemented in v0.1."
+
+[[integrations]]
+id = "zotero"
+capability = "reference_management"
+status = "planned-optional"
+cost = "free-open-source-client; hosted storage limits vary"
+authentication = "optional API key"
+privacy = "Depends on whether local or hosted Zotero is selected."
+notes = "Not implemented in v0.1."
+
+[[integrations]]
+id = "pymupdf"
+capability = "pdf_extract"
+status = "planned-optional"
+cost = "open-source dependency with AGPL/commercial licensing considerations"
+authentication = "none"
+privacy = "Local processing."
+notes = "Not installed by the foundation release; license fit must be reviewed before bundling."
+
+[[integrations]]
+id = "feynman"
+capability = "external_research_agent"
+status = "planned-optional"
+cost = "see upstream project and configured model provider"
+authentication = "provider-dependent"
+privacy = "Provider- and deployment-dependent."
+notes = "Referenced by the upstream audit; not bundled or required."

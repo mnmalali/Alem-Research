@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "org.alem.openalex"
+name = "OpenAlex Academic Search"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Search the OpenAlex scholarly works index through Alem's academic_search capability."
+author = "Alem Research maintainers"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "academic_search"
+version = "1.0"
+extension_type = "tool"
+priority = 200
+description = "Search scholarly works and return normalized metadata with provenance."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = ["api.openalex.org"]
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = ["OPENALEX_MAILTO"]
+
+[documentation]
+installation = "Inspect with 'alem plugin install org.alem.openalex', then rerun with --approve to install locally."
+usage = "Run 'alem plugin enable org.alem.openalex --approve', select it as the academic_search provider, then invoke with query and optional limit."
+
+[assets]
+skills = []
+agents = []
+workflows = []

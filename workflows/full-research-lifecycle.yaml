@@ -1,0 +1,25 @@
+schema_version: 1
+id: full-research-lifecycle
+name: Full research lifecycle
+state_file: STATUS.md
+stages:
+  - {id: "01", name: ideation, owner: research-discovery, skill: research-ideation, output: 01-ideation/candidate-topics.md, gate: choose_direction}
+  - {id: "02", name: gap-assessment, owner: research-discovery, skill: research-scoping, capability: academic_search, capability_version: "1.0", output: 02-gap/gap-assessment.md, gate: approve_question}
+  - {id: "03", name: literature-search, owner: literature-review, skill: literature-search, capability: academic_search, capability_version: "1.0", output: 03-literature/search-protocol.md}
+  - {id: "04", name: evidence-synthesis, owner: literature-review, skill: literature-review, output: 04-review/evidence-synthesis.md}
+  - {id: "05", name: questions-hypotheses, owner: research-director, output: 05-question/research-question.md, gate: approve_question}
+  - {id: "06", name: methodology, owner: research-methodology, skill: research-design, output: 06-methodology/protocol.md, gate: approve_methodology}
+  - {id: "07", name: dataset-discovery, owner: data-analysis, skill: dataset-discovery, capability: dataset_search, capability_version: "1.0", output: 07-data/dataset-assessment.md, gate: approve_acquisition}
+  - {id: "08", name: data-preparation, owner: data-analysis, capability: data_profile, capability_version: "1.0", output: 08-preparation/preparation-log.md, gate: approve_consequential_collection}
+  - {id: "09", name: experiments, owner: data-analysis, skill: experiment-design, output: 09-experiments/run-registry.csv}
+  - {id: "10", name: analysis, owner: data-analysis, skill: data-analysis, capability: statistical_analysis, capability_version: "1.0", output: 10-analysis/README.md, gate: approve_analysis_choices}
+  - {id: "11", name: interpretation, owner: research-director, output: 11-interpretation/results-and-limitations.md, gate: approve_claims}
+  - {id: "12", name: knowledge-update, owner: research-director, skill: knowledge-management, workflow: knowledge-update, output: 12-knowledge/change-proposal.md}
+  - {id: "13", name: manuscript, owner: academic-writer, skill: academic-writing, output: 13-paper/manuscript.md}
+  - {id: "14", name: citation-verification, owner: citation-verification, skill: citation-verification, capability: citation_verify, capability_version: "1.0", output: 14-citations/citation-ledger.csv}
+  - {id: "15", name: critical-review, owner: critical-reviewer, skill: peer-review, output: 15-review/review.md}
+  - {id: "16", name: publication, owner: critical-reviewer, skill: reproducibility-audit, output: 16-publication/reproducibility-report.md, gate: approve_release}
+resume:
+  read_first: [PROJECT.md, STATUS.md]
+  require_completed_dependencies: true
+  append_run_log: provenance/workflow-runs.jsonl

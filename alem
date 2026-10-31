@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -eu
+
+ALEM_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -x "$ALEM_ROOT/.alem/venv/bin/python" ]; then
+  ALEM_PYTHON="$ALEM_ROOT/.alem/venv/bin/python"
+else
+  ALEM_PYTHON="${PYTHON:-python3}"
+fi
+if [ -n "${PYTHONPATH:-}" ]; then
+  export PYTHONPATH="$ALEM_ROOT/src:$PYTHONPATH"
+else
+  export PYTHONPATH="$ALEM_ROOT/src"
+fi
+exec "$ALEM_PYTHON" -m alem "$@"

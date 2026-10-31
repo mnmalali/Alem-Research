@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "org.alem.semantic-scholar"
+name = "Semantic Scholar Academic Search"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Search Semantic Scholar through the interchangeable academic_search capability."
+author = "Alem Research maintainers"
+repository = "https://github.com/alem-research/alem-research"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "academic_search"
+version = "1.0"
+extension_type = "tool"
+priority = 190
+description = "Search scholarly works and return normalized metadata with provenance."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = ["api.semanticscholar.org"]
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = ["SEMANTIC_SCHOLAR_API_KEY"]
+
+[documentation]
+installation = "Inspect with 'alem plugin install org.alem.semantic-scholar', then rerun with --approve to install locally."
+usage = "Run 'alem plugin enable org.alem.semantic-scholar --approve' and configure it as a default or fallback academic_search provider."
+
+[assets]
+skills = []
+agents = []
+workflows = []

@@ -1,0 +1,17 @@
+"""Unit-test starter; place under your plugin's tests/ directory."""
+
+from alem.extensions.api import ExecutionRequest
+from plugin import plugin
+
+
+def test_invoke_contract():
+    request = ExecutionRequest(capability="{{CAPABILITY}}", input={"example": True})
+    response = plugin.invoke(request)
+    assert response.metadata["provider"] == "{{PLUGIN_ID}}"
+
+
+def test_manifest_from_repository_root():
+    from alem.extensions import load_manifest
+
+    manifest = load_manifest(".")
+    assert manifest.id == "{{PLUGIN_ID}}"
