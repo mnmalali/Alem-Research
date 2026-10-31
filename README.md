@@ -16,7 +16,7 @@ service.
 Python 3.11 or newer and Git are the only core prerequisites. No global Alem installation is needed.
 
 ```bash
-git clone https://github.com/alem-research/alem-research.git
+git clone https://github.com/mnmalali/Alem-Research.git
 cd alem-research
 sh ./alem setup --create-venv
 ./alem health
@@ -113,6 +113,24 @@ criteria, and exclusions support that claim.
 - [Upstream source and license audit](docs/upstream-audit.md)
 - [Manual release validation](docs/manual-validation.md)
 - [Contributing](CONTRIBUTING.md)
+
+## Citation
+
+Alem Research was created and is maintained by
+[Mohamad Numan Alali](https://github.com/mnmalali). If you use Alem Research in academic or
+professional work, please cite the software. GitHub and compatible reference managers can read the
+complete metadata from [`CITATION.cff`](CITATION.cff).
+
+```bibtex
+@software{alem_research_2026,
+  author  = {Mohamad Numan Alali},
+  title   = {Alem Research: An Open-Source AI Research Workspace},
+  year    = {2026},
+  version = {0.1.0},
+  url     = {https://github.com/mnmalali/Alem-Research},
+  license = {MIT}
+}
+```
 
 ## License
 

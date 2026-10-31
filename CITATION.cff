@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use Alem Research in your work, please cite it using the metadata below."
+type: software
+title: "Alem Research: An Open-Source AI Research Workspace"
+authors:
+  - family-names: Alali
+    given-names: Mohamad Numan
+    alias: mnmalali
+    website: "https://github.com/mnmalali"
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/mnmalali/Alem-Research"
+url: "https://github.com/mnmalali/Alem-Research"
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Alali
+      given-names: Mohamad Numan
+  title: "Alem Research: An Open-Source AI Research Workspace"
+  version: 0.1.0
+  year: 2026
+  url: "https://github.com/mnmalali/Alem-Research"
