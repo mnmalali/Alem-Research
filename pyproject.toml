@@ -9,7 +9,7 @@ description = "A local-first, extensible AI research workspace for Codex and Cla
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Alem Research contributors" }]
+authors = [{ name = "Mohamad Numan Alali" }]
 keywords = ["research", "academic", "agents", "codex", "claude", "plugins"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -30,9 +30,9 @@ dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.8"]
 alem = "alem.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/alem-research/alem-research"
-Documentation = "https://github.com/alem-research/alem-research/tree/main/docs"
-Issues = "https://github.com/alem-research/alem-research/issues"
+Homepage = "https://github.com/mnmalali/Alem-Research"
+Documentation = "https://github.com/mnmalali/Alem-Research/tree/main/docs"
+Issues = "https://github.com/mnmalali/Alem-Research/issues"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
