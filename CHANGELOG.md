@@ -11,6 +11,8 @@ versions its extension API and persisted schemas.
 - Curated Orchestra Research skill assets with namespaced Codex and Claude adapters.
 - Offline Wenyu research-skill and Awesome AI Research Tools discovery capabilities.
 - Upstream integration records, attribution notices, and contributor guidance for adding tools.
+- Automatic installation and enablement of official plugins during `alem setup`.
+- Explicit `verified`/`unverified` trust classification for opt-in community plugins.
 
 ### Changed
 

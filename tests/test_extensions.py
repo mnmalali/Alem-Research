@@ -126,6 +126,7 @@ def _write_catalogue(root: Path, plugin_ids: list[str]) -> Path:
 id = "{plugin_id}"
 version = "1.0.0"
 channel = "community"
+verification = "unverified"
 source = "../plugins/{plugin_id}"
 summary = "Dependency fixture."
 author = "Test contributor"

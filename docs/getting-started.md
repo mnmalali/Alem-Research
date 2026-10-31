@@ -26,7 +26,10 @@ sh ./alem setup --create-venv
 ```
 
 The setup command creates only ignored paths under `.alem/`, plus regenerable skill adapters under
-the repository's `.agents/` and `.claude/` directories. It does not edit user-level agent settings.
+the repository's `.agents/` and `.claude/` directories. It automatically installs and enables
+Alem's official plugins. Community plugins are listed and classified during setup but remain
+opt-in; the agent should tell you they are available and ask before installing them. Setup does
+not edit user-level agent settings.
 
 ## Create a research project
 
@@ -40,16 +43,16 @@ state; an agent must not silently make consequential research decisions.
 
 ## Add academic-search providers
 
-List catalogue entries and inspect their manifests before approving anything:
+Official academic-search providers are installed during setup. To inspect them manually:
 
 ```bash
 ./alem plugin search academic
 ./alem plugin validate plugins/official/openalex
-./alem plugin install org.alem.openalex --approve
-./alem plugin enable org.alem.openalex --approve
 ```
 
-Install and enable `org.alem.semantic-scholar` the same way to activate the configured fallback.
+Community plugins are not installed automatically. Review their verification status with
+`./alem plugin search`, then install only the ones you choose. The configured official route
+uses OpenAlex as default and Semantic Scholar as fallback.
 The exact plugin commands and failure behavior are documented in
 [`plugin-development.md`](plugin-development.md).
 

@@ -145,6 +145,109 @@ class WorkspaceAndConfigTests(unittest.TestCase):
 
 
 class SetupAdapterAndHealthTests(unittest.TestCase):
+    def test_setup_installs_official_plugins_and_reports_opt_in_community_plugins(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = make_workspace(Path(temporary) / "workspace")
+            official = workspace.path("plugins/official/test-official")
+            official.mkdir(parents=True)
+            (official / "SKILL.md").write_text("# Official skill\n", encoding="utf-8")
+            (official / "plugin.toml").write_text(
+                """schema_version = 1
+capabilities = []
+
+[plugin]
+id = "org.test.official"
+name = "Test official plugin"
+version = "1.0.0"
+api = ">=1.0,<2.0"
+description = "Test official plugin."
+author = "Alem maintainers"
+repository = "local://official"
+license = "MIT"
+types = ["skill"]
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Install automatically during setup."
+usage = "Test fixture."
+
+[assets]
+skills = ["SKILL.md"]
+agents = []
+workflows = []
+""",
+                encoding="utf-8",
+            )
+            community = workspace.path("plugins/community/test-community")
+            community.mkdir(parents=True)
+            (community / "SKILL.md").write_text("# Community skill\n", encoding="utf-8")
+            (community / "plugin.toml").write_text((official / "plugin.toml").read_text().replace(
+                "org.test.official", "dev.test.community"
+            ).replace("Test official plugin", "Test community plugin"), encoding="utf-8")
+            catalogue = workspace.path("catalogue/index.toml")
+            catalogue.parent.mkdir()
+            catalogue.write_text(
+                """schema_version = 1
+
+[[plugins]]
+id = "org.test.official"
+version = "1.0.0"
+channel = "official"
+verification = "official"
+source = "../plugins/official/test-official"
+summary = "Official fixture."
+author = "Alem maintainers"
+repository = "local://official"
+license = "MIT"
+extension_types = ["skill"]
+capabilities = []
+
+[[plugins]]
+id = "dev.test.community"
+version = "1.0.0"
+channel = "community"
+verification = "unverified"
+source = "../plugins/community/test-community"
+summary = "Community fixture."
+author = "Test contributor"
+repository = "local://community"
+license = "MIT"
+extension_types = ["skill"]
+capabilities = []
+""",
+                encoding="utf-8",
+            )
+
+            result = initialize_workspace(workspace)
+            self.assertEqual(result["plugins"]["official"]["installed"], ["org.test.official"])
+            self.assertEqual(result["plugins"]["official"]["enabled"], ["org.test.official"])
+            self.assertEqual(
+                result["plugins"]["community_available"],
+                {"verified": [], "unverified": ["dev.test.community"]},
+            )
+            state = workspace.read_json(".alem/state/plugins.json")
+            self.assertTrue(state["plugins"]["org.test.official"]["enabled"])
+            self.assertNotIn("dev.test.community", state["plugins"])
+
     def test_setup_records_only_workspace_local_paths_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             workspace = make_workspace(Path(temporary) / "workspace")

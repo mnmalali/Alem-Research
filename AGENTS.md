@@ -16,6 +16,9 @@ Alem is a local-first academic research workspace. Treat files in this repositor
 10. Update the wiki only through the explicit knowledge-update workflow.
 11. Keep secrets, sensitive data, PDFs, runtime state, environments, logs, and caches out of Git.
 12. Stop for human approval before finalizing a research question, approving methodology, beginning consequential data collection, locking analysis choices, or releasing a manuscript.
+13. When setting up Alem, report that official plugins are installed automatically and list the
+    available community plugins with their `verified` or `unverified` status. Never install or
+    enable a community plugin unless the user explicitly chooses it.
 
 ## Persistent handoffs
 

@@ -16,6 +16,8 @@ A community PR must include:
 3. README installation and usage instructions, rate limits, privacy/data-flow
    notes, failure behavior, and evidence limitations.
 4. A `catalogue/index.toml` entry marked `community`.
+   Community entries must declare `verification = "unverified"` unless an Alem maintainer has
+   personally reviewed and accepted them as `verification = "verified"`.
 5. Unit tests and an integration test using only public
    `alem.extensions.api` contracts. Network tests must use recorded or mocked
    responses and contain no secrets.

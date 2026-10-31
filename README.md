@@ -137,7 +137,7 @@ current upstream integrations and their limits are documented in
 [`docs/upstream-integrations.md`](docs/upstream-integrations.md). Catalog plugins discover
 candidates; they do not silently install or trust linked projects.
 
-Inspect the catalogue and invoke an academic-search provider:
+Setup installs the official providers automatically. Inspect or repair the catalogue manually with:
 
 ```bash
 ./alem plugin search academic
@@ -154,7 +154,10 @@ processing.
 ### Plugin catalogue
 
 The checked-in [plugin catalogue](catalogue/index.toml) is the authoritative list of plugins
-available to Alem. Installation and execution always require separate approval.
+available to Alem. Official plugins are installed and enabled automatically by `alem setup`.
+Community plugins remain opt-in and are classified as `verified` or `unverified`. Installation
+and execution of community plugins still require explicit approval; setup records the equivalent
+approval automatically only for official Alem-maintained plugins.
 
 #### Official plugins
 
@@ -165,13 +168,13 @@ available to Alem. Installation and execution always require separate approval.
 
 #### Community plugins
 
-| Plugin | Capability | Description |
-| --- | --- | --- |
-| [`community.feynman-bridge`](plugins/community/feynman-bridge) | `research_agent` | Workspace-local bridge to the separately installed Feynman research agent. |
-| [`community.orchestra-research-skills`](plugins/community/orchestra-research-skills) | skills | Curated, namespaced research skills from Orchestra Research. |
-| [`community.wenyu-research-catalog`](plugins/community/wenyu-research-catalog) | `research_skill_catalog` | Offline catalog of research skills and runtime requirements. |
-| [`community.awesome-research-tools-catalog`](plugins/community/awesome-research-tools-catalog) | `research_tool_catalog` | Offline discovery catalog of research tools. |
-| [`dev.community.static-search`](examples/plugins/community-static-search) | `academic_search` | Deterministic example plugin used for lifecycle tests and learning. |
+| Plugin | Verification | Capability | Description |
+| --- | --- | --- | --- |
+| [`community.feynman-bridge`](plugins/community/feynman-bridge) | Verified | `research_agent` | Workspace-local bridge to the separately installed Feynman research agent. |
+| [`community.orchestra-research-skills`](plugins/community/orchestra-research-skills) | Verified | skills | Curated, namespaced research skills from Orchestra Research. |
+| [`community.wenyu-research-catalog`](plugins/community/wenyu-research-catalog) | Verified | `research_skill_catalog` | Offline catalog of research skills and runtime requirements. |
+| [`community.awesome-research-tools-catalog`](plugins/community/awesome-research-tools-catalog) | Verified | `research_tool_catalog` | Offline discovery catalog of research tools. |
+| [`dev.community.static-search`](examples/plugins/community-static-search) | Verified | `academic_search` | Deterministic example plugin used for lifecycle tests and learning. |
 
 Community entries are reviewed contributions, not automatic endorsements. Their permissions,
 dependencies, licenses, privacy behavior, and evidence limitations must be checked before

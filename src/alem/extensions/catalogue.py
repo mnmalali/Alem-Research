@@ -17,6 +17,7 @@ class CatalogueEntry:
     id: str
     version: str
     channel: str
+    verification: str
     source: str
     summary: str
     author: str
@@ -51,6 +52,7 @@ class PluginCatalogue:
             "id",
             "version",
             "channel",
+            "verification",
             "source",
             "summary",
             "author",
@@ -71,6 +73,15 @@ class PluginCatalogue:
                     )
             if value["channel"] not in {"official", "community"}:
                 raise ManifestError("catalogue channel must be official or community")
+            verification = value["verification"]
+            allowed_verification = (
+                {"official"} if value["channel"] == "official" else {"verified", "unverified"}
+            )
+            if verification not in allowed_verification:
+                raise ManifestError(
+                    f"catalogue plugin {index}.verification must be one of "
+                    f"{sorted(allowed_verification)}"
+                )
             for key in ("extension_types", "capabilities"):
                 if not isinstance(value[key], list) or not all(
                     isinstance(item, str) for item in value[key]
@@ -80,6 +91,7 @@ class PluginCatalogue:
                 id=value["id"],
                 version=value["version"],
                 channel=value["channel"],
+                verification=verification,
                 source=value["source"],
                 summary=value["summary"],
                 author=value["author"],

@@ -15,6 +15,14 @@ and execution approval.
 
 ## Install the integrations
 
+Official plugins are installed and enabled automatically by `alem setup`. Community plugins are
+reported during setup but remain opt-in:
+
+```powershell
+.\alem.ps1 setup --create-venv
+.\alem.ps1 plugin search
+```
+
 Review the plugin source first, then use the normal two-step Alem approval flow:
 
 ```powershell

@@ -46,6 +46,23 @@ def _cmd_setup(arguments: argparse.Namespace, workspace: Workspace) -> int:
         if arguments.create_venv:
             status = "created" if result["local_venv_created"] else "already present"
             print(f"Local Python environment: {status}")
+        official = result["plugins"]["official"]
+        ready = [*official["installed"], *official["already_ready"]]
+        print(
+            "Official plugins: "
+            + (", ".join(ready) if ready else "none configured")
+            + " (installed and enabled automatically)"
+        )
+        community = result["plugins"]["community_available"]
+        verified = ", ".join(community["verified"]) or "none"
+        unverified = ", ".join(community["unverified"]) or "none"
+        print("Community plugins are available but opt-in.")
+        print(f"  Verified community plugins: {verified}")
+        print(f"  Unverified community plugins: {unverified}")
+        print(
+            "  Inspect with `alem plugin search`; install with "
+            "`alem plugin install <id> --approve`."
+        )
     return 0
 
 
@@ -211,7 +228,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
-    setup = commands.add_parser("setup", help="initialize workspace-local runtime and adapters")
+    setup = commands.add_parser(
+        "setup",
+        help="initialize runtime, install official plugins, and report opt-in community plugins",
+    )
     setup.add_argument("--create-venv", action="store_true", help="create .alem/venv")
     _add_common_json(setup)
     setup.set_defaults(handler=_cmd_setup)

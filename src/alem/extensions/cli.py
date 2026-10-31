@@ -97,11 +97,12 @@ def _plugin_search(arguments: argparse.Namespace, workspace: Workspace) -> int:
     if not entries:
         print("No catalogue plugins matched")
         return 0
-    print("ID  VERSION  CHANNEL  TYPES  CAPABILITIES")
+    print("ID  VERSION  CHANNEL  VERIFICATION  TYPES  CAPABILITIES")
     for entry in entries:
         print(
             f"{entry.id}  {entry.version}  {entry.channel}  "
-            f"{','.join(entry.extension_types)}  {','.join(entry.capabilities) or '-'}"
+            f"{entry.verification}  {','.join(entry.extension_types)}  "
+            f"{','.join(entry.capabilities) or '-'}"
         )
         print(f"  {entry.summary}")
     return 0
