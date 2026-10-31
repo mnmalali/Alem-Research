@@ -1,6 +1,6 @@
 # Getting started
 
-> Alem 0.1 is a foundation release. Plugin code is not sandboxed by the operating system. Inspect
+> Alem 0.2 is an integration release. Plugin code is not sandboxed by the operating system. Inspect
 > a plugin and its requested permissions before approving installation or execution.
 
 ## Set up a local workspace

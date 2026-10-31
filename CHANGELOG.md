@@ -3,6 +3,19 @@
 All notable changes are recorded here. Alem uses semantic versioning for releases and separately
 versions its extension API and persisted schemas.
 
+## 0.2.0 — unreleased integration release
+
+### Added
+
+- Workspace-local Feynman `research_agent` bridge using the pinned `0.5.61` CLI runtime.
+- Curated Orchestra Research skill assets with namespaced Codex and Claude adapters.
+- Offline Wenyu research-skill and Awesome AI Research Tools discovery capabilities.
+- Upstream integration records, attribution notices, and contributor guidance for adding tools.
+
+### Changed
+
+- The Alem package and citation metadata are now version `0.2.0`.
+
 ## 0.1.0 — unreleased foundation
 
 ### Added

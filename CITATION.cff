@@ -7,7 +7,7 @@ authors:
     given-names: Mohamad Numan
     alias: mnmalali
     website: "https://github.com/mnmalali"
-version: 0.1.0
+version: 0.2.0
 license: MIT
 repository-code: "https://github.com/mnmalali/Alem-Research"
 url: "https://github.com/mnmalali/Alem-Research"
@@ -17,6 +17,6 @@ preferred-citation:
     - family-names: Alali
       given-names: Mohamad Numan
   title: "Alem Research: An Open-Source AI Research Workspace"
-  version: 0.1.0
+  version: 0.2.0
   year: 2026
   url: "https://github.com/mnmalali/Alem-Research"

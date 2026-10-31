@@ -39,6 +39,9 @@ On Windows PowerShell, keep the same workspace-local boundary:
 - Missing optional integrations fail clearly and do not disable unrelated research work.
 - Evidence metadata must identify what was verified and what remains interpretation or hypothesis.
 - No feature is marked complete only because files or stubs exist.
+- Every user-visible tool or integration addition requires a semantic Alem version bump, a
+  changelog entry, and synchronized package/citation metadata. Plugin versions remain separate
+  from the Alem release version.
 
 Changes to public manifests, protocols, or persisted state require an API-versioning and migration
 assessment. See [`docs/plugin-api-versioning.md`](docs/plugin-api-versioning.md).

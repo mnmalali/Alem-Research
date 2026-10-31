@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "community.awesome-research-tools-catalog"
+name = "Awesome AI Research Tools Catalog"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Search the pinned Awesome AI Research Tools list as a local discovery aid."
+author = "Alem Research maintainers"
+repository = "https://github.com/0x11c11e/awesome-ai-research-tools"
+license = "CC0-1.0"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "research_tool_catalog"
+version = "1.0"
+extension_type = "tool"
+priority = 100
+description = "Search a pinned curated list of research tools and return links as untrusted discovery leads."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = ["AWESOME.md"]
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Install and enable this offline catalog plugin with separate --approve flags; audit every result before use."
+usage = "Invoke research_tool_catalog with an optional query and limit; results are not endorsements and are not installed automatically."
+
+[assets]
+skills = []
+agents = []
+workflows = []

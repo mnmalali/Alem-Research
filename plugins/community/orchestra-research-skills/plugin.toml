@@ -1,0 +1,50 @@
+schema_version = 1
+
+capabilities = []
+
+[plugin]
+id = "community.orchestra-research-skills"
+name = "Orchestra Research Skills (curated)"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Curated, workspace-local research skills adapted from the Orchestra Research skill library."
+author = "Alem Research maintainers"
+repository = "https://github.com/Orchestra-Research/AI-Research-SKILLs"
+license = "MIT"
+types = ["skill"]
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = []
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Review the selected upstream skill files and license, then install and enable this data-only plugin with separate --approve flags."
+usage = "After enablement, Alem generates namespaced Codex and Claude Code adapters for the curated skills."
+
+[assets]
+skills = [
+  "assets/autoresearch",
+  "assets/research-ideation/brainstorming-research-ideas",
+  "assets/research-ideation/creative-thinking-for-research",
+  "assets/agent-native-research-artifact/compiler",
+  "assets/agent-native-research-artifact/research-manager",
+  "assets/agent-native-research-artifact/rigor-reviewer",
+]
+agents = []
+workflows = []

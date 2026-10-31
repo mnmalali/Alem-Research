@@ -54,6 +54,7 @@ independent of any single coding agent, search provider, model, or external serv
 | Knowledge | An Obsidian-compatible Markdown wiki with provenance-aware templates |
 | Extensions | Versioned APIs for tools, skills, agents, and workflows |
 | Academic search | Interchangeable OpenAlex and Semantic Scholar providers |
+| Upstream integrations | Feynman bridge, curated research skills, and offline tool/skill catalogs |
 | Coding agents | Project-local discovery adapters for Codex and Claude Code |
 | Governance | Plugin approvals, manifest validation, dependency locking, and documented security limits |
 | Community | A repository catalogue, plugin starter kit, examples, tests, and contribution guidance |
@@ -130,6 +131,11 @@ academic_search capability
       ├── Semantic Scholar
       └── Community provider
 ```
+
+Supplied research tools are integrated through the same workspace-local extension system. The
+current upstream integrations and their limits are documented in
+[`docs/upstream-integrations.md`](docs/upstream-integrations.md). Catalog plugins discover
+candidates; they do not silently install or trust linked projects.
 
 Inspect the catalogue and invoke an academic-search provider:
 
@@ -219,7 +225,7 @@ please cite the software. GitHub and compatible reference managers can read the 
   author  = {Mohamad Numan Alali},
   title   = {Alem Research: An Open-Source AI Research Workspace},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://github.com/mnmalali/Alem-Research},
   license = {MIT}
 }

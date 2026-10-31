@@ -4,7 +4,10 @@ Status: foundation audit
 Evidence captured: 2026-10-31 (Asia/Dubai)
 Method: live GitHub repository/gist metadata, default-branch trees, README and installation documentation, dependency manifests, contribution guidance, and the complete license file were inspected. Repository state is pinned below; dates describe the upstream state observed during this audit, not a promise about future availability.
 
-This audit is an architecture input, not permission to vendor upstream work. Alem's foundation has **no required runtime dependency on any source in this document**.
+This audit is an architecture input and integration record, not permission to vendor upstream
+work blindly. Alem has **no required runtime dependency on any source in this document**; optional
+workspace-local adapters and curated assets are recorded in
+[`upstream-integrations.md`](upstream-integrations.md).
 
 ## Decision summary
 

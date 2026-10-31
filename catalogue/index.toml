@@ -13,6 +13,54 @@ extension_types = ["tool"]
 capabilities = ["academic_search"]
 
 [[plugins]]
+id = "community.feynman-bridge"
+version = "0.1.0"
+channel = "community"
+source = "../plugins/community/feynman-bridge"
+summary = "Optional bridge to a separately installed, telemetry-disabled-by-default Feynman research agent."
+author = "Alem Research maintainers"
+repository = "https://github.com/Companion-Inc/feynman"
+license = "MIT"
+extension_types = ["tool"]
+capabilities = ["research_agent"]
+
+[[plugins]]
+id = "community.orchestra-research-skills"
+version = "0.1.0"
+channel = "community"
+source = "../plugins/community/orchestra-research-skills"
+summary = "Curated, namespaced portable skills from Orchestra Research."
+author = "Alem Research maintainers"
+repository = "https://github.com/Orchestra-Research/AI-Research-SKILLs"
+license = "MIT"
+extension_types = ["skill"]
+capabilities = []
+
+[[plugins]]
+id = "community.wenyu-research-catalog"
+version = "0.1.0"
+channel = "community"
+source = "../plugins/community/wenyu-research-catalog"
+summary = "Offline searchable catalog of Wenyu's research skills and runtime requirements."
+author = "Alem Research maintainers"
+repository = "https://github.com/WenyuChiou/ai-research-skills"
+license = "MIT"
+extension_types = ["tool"]
+capabilities = ["research_skill_catalog"]
+
+[[plugins]]
+id = "community.awesome-research-tools-catalog"
+version = "0.1.0"
+channel = "community"
+source = "../plugins/community/awesome-research-tools-catalog"
+summary = "Offline searchable discovery catalog for the Awesome AI Research Tools list."
+author = "Alem Research maintainers"
+repository = "https://github.com/0x11c11e/awesome-ai-research-tools"
+license = "CC0-1.0"
+extension_types = ["tool"]
+capabilities = ["research_tool_catalog"]
+
+[[plugins]]
 id = "org.alem.semantic-scholar"
 version = "0.1.0"
 channel = "official"

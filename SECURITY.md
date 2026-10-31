@@ -17,6 +17,6 @@ research data may have been exposed. Use synthetic data and revoke any accidenta
 ## Plugin boundary
 
 Treat third-party plugin code as arbitrary code. Manifests, approval prompts, hashes, and subprocess
-execution improve reviewability and integrity; they do not create a security sandbox. Alem 0.1 does
+execution improve reviewability and integrity; they do not create a security sandbox. Alem 0.2 does
 not claim to stop approved malicious code from reading user-accessible files or using the network.
 See [`docs/plugin-security.md`](docs/plugin-security.md).

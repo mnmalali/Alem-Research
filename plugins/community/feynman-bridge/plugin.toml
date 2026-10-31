@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "community.feynman-bridge"
+name = "Feynman Research Agent Bridge"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Invoke a workspace-approved Feynman CLI installation through Alem's research_agent capability."
+author = "Alem Research maintainers"
+repository = "https://github.com/Companion-Inc/feynman"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "research_agent"
+version = "1.0"
+extension_type = "tool"
+priority = 100
+description = "Run a bounded Feynman research mode and return captured output and provenance paths."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = ["*"]
+filesystem_read = []
+filesystem_write = [".alem/plugin-data/community.feynman-bridge"]
+subprocess = true
+native_code = false
+
+[credentials]
+required = []
+optional = ["FEYNMAN_TELEMETRY", "OPENALEX_API_KEY", "SEMANTIC_SCHOLAR_API_KEY"]
+
+[documentation]
+installation = "Install the pinned Feynman CLI separately in the workspace environment, validate this plugin, then install and enable it with separate --approve flags."
+usage = "Invoke research_agent with {\"topic\":\"...\",\"mode\":\"deepresearch\"}; the bridge never installs Feynman or enables its telemetry implicitly."
+
+[assets]
+skills = []
+agents = []
+workflows = []

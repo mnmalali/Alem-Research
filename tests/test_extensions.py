@@ -149,7 +149,14 @@ def test_all_catalogue_manifests_are_strictly_valid() -> None:
     ]
     for entry in catalogue.search():
         source = catalogue.resolve_source(entry)
-        assert validate_manifest(source) == []
+        warnings = validate_manifest(source)
+        if entry.id == "community.feynman-bridge":
+            assert warnings == [
+                "plugin requests subprocess execution",
+                "plugin requests unrestricted network access",
+            ]
+        else:
+            assert warnings == []
         manifest = load_manifest(source)
         assert manifest.id == entry.id
         assert manifest.api == ">=1.0,<2.0"

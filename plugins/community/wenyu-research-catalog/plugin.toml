@@ -1,0 +1,49 @@
+schema_version = 1
+
+[plugin]
+id = "community.wenyu-research-catalog"
+name = "Wenyu AI Research Skills Catalog"
+version = "0.1.0"
+api = ">=1.0,<2.0"
+description = "Search the pinned Wenyu AI Research Skills catalog for portable skills and optional runtimes."
+author = "Alem Research maintainers"
+repository = "https://github.com/WenyuChiou/ai-research-skills"
+license = "MIT"
+types = ["tool"]
+entrypoint = "plugin.py:plugin"
+
+[[capabilities]]
+name = "research_skill_catalog"
+version = "1.0"
+extension_type = "tool"
+priority = 100
+description = "Discover cataloged research skills, lifecycle stages, runtime modes, and integration requirements."
+
+[compatibility]
+python = ">=3.11,<4.0"
+operating_systems = ["windows", "linux", "macos"]
+coding_agents = ["codex", "claude-code"]
+
+[dependencies]
+plugins = []
+python = []
+
+[permissions]
+network = []
+filesystem_read = ["skills.yml"]
+filesystem_write = []
+subprocess = false
+native_code = false
+
+[credentials]
+required = []
+optional = []
+
+[documentation]
+installation = "Install and enable this offline catalog plugin with separate --approve flags; it does not install the listed external runtimes."
+usage = "Invoke research_skill_catalog with an optional query and limit to find candidate skills before separately auditing or importing them."
+
+[assets]
+skills = []
+agents = []
+workflows = []

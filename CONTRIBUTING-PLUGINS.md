@@ -28,6 +28,13 @@ Start with `alem plugin create <name>` (generated under
 expected layout and lifecycle without pretending its synthetic record is a
 real source.
 
+When contributing an external research tool, add an Alem adapter or a reviewed declarative asset
+under `plugins/community/`; do not make the upstream repository a hidden runtime dependency.
+Record the exact upstream commit, license, copied file paths, local modifications, permissions,
+and external setup in the plugin README and `docs/upstream-register.toml`. Prefer a narrow
+provider-neutral capability or an offline catalog over arbitrary command passthrough. External
+code still requires separate install and execution approval.
+
 ## Review criteria
 
 Reviewers check identifier ownership, useful non-duplicative capability,
