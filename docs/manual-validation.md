@@ -13,11 +13,21 @@ operating-system setup path. Complete this checklist before calling a release st
 
 ## Agent discovery
 
-- Start a new Codex session in the repository and ask it to name the canonical `literature-search`
-  skill path after reading project instructions.
+- Confirm lazy setup exposes only the generated `alem-router` adapter in each host directory.
+- Start a new Codex session and ask it to plan a literature-search task through the router, then
+  confirm it reads the canonical `literature-search` path only after selection.
 - Start a new Claude Code session and perform the same check.
-- Ask each agent to explain that adapters are not independent copies.
-- Confirm neither agent reports a skill that is absent from `skills/`.
+- Confirm an unrelated analysis skill is not loaded for that task.
+- Repeat with `[context] mode = "eager"` in a temporary clone and confirm legacy discovery works.
+
+## Context and workflow
+
+- Build the context index and confirm adding a catalog-only integration does not add a startup
+  adapter.
+- Exercise `context plan`, `explain`, `activate`, `status`, and `deactivate`.
+- Start a lifecycle run, complete an agent-authored step, and confirm the declared human gate blocks
+  progress until `workflow approve` records an approver and decision.
+- Register an artifact, modify its file, and confirm `artifact verify` detects the digest mismatch.
 
 ## Plugin lifecycle
 

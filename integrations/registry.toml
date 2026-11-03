@@ -1,82 +1,155 @@
-schema_version = 1
+schema_version = 2
 
 [[integrations]]
 id = "openalex"
-capability = "academic_search"
-status = "bundled-plugin"
+name = "OpenAlex academic search"
+kind = "provider"
+status = "contract-tested"
+trust = "official"
+plugin_id = "org.alem.openalex"
+capabilities = ["academic_search"]
 cost = "free-service"
-authentication = "none"
+authentication = "none; optional polite-pool email"
 privacy = "Search queries and request metadata are sent to api.openalex.org."
-notes = "Public API rate limits and polite-pool guidance apply."
+notes = "Bundled provider with offline normalization tests and a recorded live smoke test."
 
 [[integrations]]
 id = "semantic-scholar"
-capability = "academic_search"
-status = "bundled-plugin"
+name = "Semantic Scholar academic search"
+kind = "provider"
+status = "contract-tested"
+trust = "official"
+plugin_id = "org.alem.semantic-scholar"
+capabilities = ["academic_search"]
 cost = "free-service"
 authentication = "optional API key"
 privacy = "Search queries and request metadata are sent to api.semanticscholar.org."
-notes = "Works without a key at lower limits; obey service rate limits."
-
-[[integrations]]
-id = "crossref"
-capability = "paper_metadata"
-status = "planned"
-cost = "free-service"
-authentication = "none"
-privacy = "Metadata queries will be sent to api.crossref.org when enabled."
-notes = "Not implemented in v0.1."
-
-[[integrations]]
-id = "arxiv"
-capability = "preprint_search"
-status = "planned"
-cost = "free-service"
-authentication = "none"
-privacy = "Queries will be sent to export.arxiv.org when enabled."
-notes = "Not implemented in v0.1."
-
-[[integrations]]
-id = "pubmed"
-capability = "biomedical_search"
-status = "planned"
-cost = "free-service"
-authentication = "optional API key"
-privacy = "Queries will be sent to NCBI when enabled."
-notes = "Not implemented in v0.1."
-
-[[integrations]]
-id = "europe-pmc"
-capability = "biomedical_search"
-status = "planned"
-cost = "free-service"
-authentication = "none"
-privacy = "Queries will be sent to Europe PMC when enabled."
-notes = "Not implemented in v0.1."
-
-[[integrations]]
-id = "zotero"
-capability = "reference_management"
-status = "planned-optional"
-cost = "free-open-source-client; hosted storage limits vary"
-authentication = "optional API key"
-privacy = "Depends on whether local or hosted Zotero is selected."
-notes = "Not implemented in v0.1."
-
-[[integrations]]
-id = "pymupdf"
-capability = "pdf_extract"
-status = "planned-optional"
-cost = "open-source dependency with AGPL/commercial licensing considerations"
-authentication = "none"
-privacy = "Local processing."
-notes = "Not installed by the foundation release; license fit must be reviewed before bundling."
+notes = "Bundled fallback provider; live unauthenticated use remains subject to rate limiting."
 
 [[integrations]]
 id = "feynman"
-capability = "external_research_agent"
-status = "planned-optional"
-cost = "see upstream project and configured model provider"
+name = "Feynman research agent bridge"
+kind = "bridge"
+status = "adapted"
+trust = "verified"
+plugin_id = "community.feynman-bridge"
+upstream_id = "companion-feynman"
+capabilities = ["research_agent"]
+cost = "upstream model-provider dependent"
 authentication = "provider-dependent"
-privacy = "Provider- and deployment-dependent."
-notes = "Referenced by the upstream audit; not bundled or required."
+privacy = "Queries and artifacts may reach the configured model and research providers."
+notes = "Workspace-local pinned CLI bridge; telemetry defaults off and execution requires approval."
+
+[[integrations]]
+id = "orchestra-research-skills"
+name = "Orchestra Research skills"
+kind = "assets"
+status = "adapted"
+trust = "verified"
+plugin_id = "community.orchestra-research-skills"
+upstream_id = "orchestra-ai-research-skills"
+capabilities = []
+cost = "free-open-source"
+authentication = "none"
+privacy = "Local instructions; individual tools mentioned by a skill have their own policies."
+notes = "Six reviewed, namespaced assets are available to lazy context routing."
+
+[[integrations]]
+id = "wenyu-research-catalog"
+name = "Wenyu AI Research Skills catalog"
+kind = "catalog"
+status = "contract-tested"
+trust = "verified"
+plugin_id = "community.wenyu-research-catalog"
+upstream_id = "wenyuchiou-ai-research-skills"
+capabilities = ["research_skill_catalog"]
+cost = "free-open-source"
+authentication = "none"
+privacy = "Offline catalog lookup."
+notes = "Discovery metadata only; referenced repositories require independent integration audits."
+
+[[integrations]]
+id = "awesome-research-tools-catalog"
+name = "Awesome AI Research Tools catalog"
+kind = "catalog"
+status = "contract-tested"
+trust = "verified"
+plugin_id = "community.awesome-research-tools-catalog"
+upstream_id = "awesome-ai-research-tools"
+capabilities = ["research_tool_catalog"]
+cost = "free-open-source"
+authentication = "none"
+privacy = "Offline catalog lookup."
+notes = "Discovery leads only; linked tools are not trusted, installed, or endorsed."
+
+[[integrations]]
+id = "crossref"
+name = "Crossref metadata"
+kind = "provider"
+status = "discovered"
+trust = "unverified"
+capabilities = ["paper_metadata"]
+cost = "free-service"
+authentication = "none"
+privacy = "Metadata queries would be sent to api.crossref.org when integrated."
+notes = "Candidate integration; no executable Alem adapter exists yet."
+
+[[integrations]]
+id = "arxiv"
+name = "arXiv preprint search"
+kind = "provider"
+status = "discovered"
+trust = "unverified"
+capabilities = ["preprint_search"]
+cost = "free-service"
+authentication = "none"
+privacy = "Queries would be sent to export.arxiv.org when integrated."
+notes = "Candidate integration; no executable Alem adapter exists yet."
+
+[[integrations]]
+id = "pubmed"
+name = "PubMed biomedical search"
+kind = "provider"
+status = "discovered"
+trust = "unverified"
+capabilities = ["biomedical_search"]
+cost = "free-service"
+authentication = "optional API key"
+privacy = "Queries would be sent to NCBI when integrated."
+notes = "Candidate integration; no executable Alem adapter exists yet."
+
+[[integrations]]
+id = "europe-pmc"
+name = "Europe PMC biomedical search"
+kind = "provider"
+status = "discovered"
+trust = "unverified"
+capabilities = ["biomedical_search"]
+cost = "free-service"
+authentication = "none"
+privacy = "Queries would be sent to Europe PMC when integrated."
+notes = "Candidate integration; no executable Alem adapter exists yet."
+
+[[integrations]]
+id = "zotero"
+name = "Zotero reference management"
+kind = "bridge"
+status = "discovered"
+trust = "unverified"
+capabilities = ["reference_management"]
+cost = "free-open-source-client; hosted storage limits vary"
+authentication = "optional API key"
+privacy = "Depends on whether local or hosted Zotero is selected."
+notes = "Candidate integration; external writes will require a dedicated human gate."
+
+[[integrations]]
+id = "local-pdf-extraction"
+name = "Local PDF extraction"
+kind = "provider"
+status = "assessed"
+trust = "unverified"
+capabilities = ["pdf_extract"]
+cost = "local dependency; implementation license must be compatible"
+authentication = "none"
+privacy = "Local processing."
+notes = "PyMuPDF licensing was identified as a concern; select and audit an implementation before adaptation."

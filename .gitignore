@@ -39,6 +39,7 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+/build/
 .venv/
 venv/
 
@@ -46,6 +47,8 @@ venv/
 .ipynb_checkpoints/
 .quarto/
 _site/
+alem research brain/.obsidian/
+alem research brain/knowledge/
 .DS_Store
 Thumbs.db
 

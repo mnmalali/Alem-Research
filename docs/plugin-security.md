@@ -1,6 +1,6 @@
 # Plugin security and trust model
 
-Third-party plugins are arbitrary code. Alem 0.2 does **not** claim that a TOML
+Third-party plugins are arbitrary code. Alem 1.0 does **not** claim that a TOML
 manifest, Python protocol, subprocess, or permission declaration isolates
 that code.
 
@@ -32,7 +32,7 @@ that code.
 These controls reduce accidents and create an auditable boundary. They are not
 security isolation.
 
-## What Alem 0.2 does not enforce
+## What Alem 1.0 does not enforce
 
 Once approved, plugin Python code runs with the same operating-system account
 as Alem. It can attempt to read or modify files outside the workspace, open

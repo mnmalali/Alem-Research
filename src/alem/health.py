@@ -58,6 +58,7 @@ def _tracked_sensitive_files(root: Path) -> list[str]:
 def run_health_checks(workspace: Workspace) -> HealthReport:
     checks: list[Check] = []
     checks.append(Check("python", "pass", f"Python {sys.version.split()[0]} is supported"))
+    config = None
     try:
         config = load_config(workspace)
         checks.append(
@@ -79,24 +80,47 @@ def run_health_checks(workspace: Workspace) -> HealthReport:
     else:
         checks.append(Check("skills", "fail", "No canonical skills found under skills/"))
 
+    router_present = workspace.path("skills/alem-router/SKILL.md").is_file()
+    expected_adapters = (
+        1 if config and config.context.mode == "lazy" and router_present else len(canonical)
+    )
     for agent_name, relative in (
         ("Codex", ".agents/skills"),
         ("Claude Code", ".claude/skills"),
     ):
         adapters = sorted(workspace.path(relative).glob("*/SKILL.md"))
         valid = sum(GENERATED_MARKER in path.read_text(encoding="utf-8") for path in adapters)
-        if canonical and valid == len(canonical):
+        if canonical and valid == expected_adapters:
             checks.append(
-                Check(f"{agent_name} adapters", "pass", f"{valid} local adapters present")
+                Check(
+                    f"{agent_name} adapters",
+                    "pass",
+                    f"{valid} local adapters present "
+                    f"({config.context.mode if config else 'unknown'} mode)",
+                )
             )
         else:
             checks.append(
                 Check(
                     f"{agent_name} adapters",
                     "warn",
-                    f"{valid}/{len(canonical)} generated adapters; run `alem setup` to synchronize",
+                    f"{valid}/{expected_adapters} generated adapters; "
+                    "run `alem setup` to synchronize",
                 )
             )
+
+    context_index = workspace.path(".alem/cache/context-index.json")
+    checks.append(
+        Check(
+            "context index",
+            "pass" if context_index.is_file() else "warn",
+            (
+                "Task-scoped context index is available"
+                if context_index.is_file()
+                else "Run `alem setup` or `alem context build` to create the context index"
+            ),
+        )
+    )
 
     for instructions, label in (("AGENTS.md", "Codex"), ("CLAUDE.md", "Claude Code")):
         if workspace.path(instructions).is_file():

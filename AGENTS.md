@@ -20,6 +20,33 @@ Alem is a local-first academic research workspace. Treat files in this repositor
     available community plugins with their `verified` or `unverified` status. Never install or
     enable a community plugin unless the user explicitly chooses it.
 
+## Persistent Obsidian brain
+
+The Obsidian vault is `alem research brain/`. It is the project-facing view of the shared
+knowledge wiki; `alem research brain/knowledge/` is a directory junction to the canonical
+repository folder `knowledge/`. Treat the repository files as the durable source of truth.
+
+Before answering a research or project question:
+
+1. Read `alem research brain/index.md` and `alem research brain/log.md`.
+2. Search `alem research brain/knowledge/` and read the relevant linked pages.
+3. Read the active project's `PROJECT.md`, evidence records, and status files when the question
+   concerns a specific project.
+4. Distinguish recalled brain content from newly verified evidence; do not present an old or
+   unverified note as current fact without checking it.
+
+At the end of a conversation, perform a brain-maintenance check. Update the brain only when the
+conversation produced reusable, supported knowledge, a durable project decision, a new source,
+or a meaningful contradiction or correction. Use `workflows/knowledge-update.yaml` for shared
+knowledge promotion; do not promote casual chat, unsupported speculation, secrets, PDFs, or
+project-sensitive material. Append a concise entry to `alem research brain/log.md` for an
+ingest, query that produced a filed artifact, correction, or maintenance pass. If no durable
+change is warranted, do not create noise; record the decision only in the handoff when useful.
+
+Every brain update must preserve provenance, use the evidence-status labels, update backlinks and
+the index when pages change, and review the diff before reporting completion. Human approval gates
+in rule 12 still apply.
+
 ## Persistent handoffs
 
 Every handoff states: objective, inputs read, actions performed, files created or changed, evidence and uncertainties, decisions needed, and the next recommended owner. Mark unfinished checklist items explicitly. Write structured outputs into the active project's numbered folders.

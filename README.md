@@ -24,8 +24,8 @@
 </p>
 
 > [!IMPORTANT]
-> **Foundation release:** Alem is ready for local workspace setup, structured research projects,
-> knowledge management, and workspace-local plugins. Third-party plugin processes are not an
+> **Stable 1.0 release:** Alem provides task-scoped context routing, resumable research workflows,
+> provenance-preserving artifacts, and workspace-local integrations. Third-party processes are not an
 > operating-system sandbox. Review their code and requested permissions before approval.
 
 ## Why Alem
@@ -47,12 +47,14 @@ independent of any single coding agent, search provider, model, or external serv
 
 ## What is included
 
-| Area | Foundation capability |
+| Area | Stable capability |
 | --- | --- |
 | Research lifecycle | A resumable 16-stage project structure from ideation through publication |
-| Research practice | 16 reusable skills and 8 specialist agent contracts |
+| Research practice | 16 specialist skills, one lazy context router, and 8 agent contracts |
 | Knowledge | An Obsidian-compatible Markdown wiki with provenance-aware templates |
-| Extensions | Versioned APIs for tools, skills, agents, and workflows |
+| Context | Task planning loads only the smallest relevant set of installed skills and capabilities |
+| Extensions | Versioned APIs and machine-readable capability contracts |
+| Workflows | Executable, resumable state with artifact records and human approval gates |
 | Academic search | Interchangeable OpenAlex and Semantic Scholar providers |
 | Upstream integrations | Feynman bridge, curated research skills, and offline tool/skill catalogs |
 | Coding agents | Project-local discovery adapters for Codex and Claude Code |
@@ -80,6 +82,7 @@ cd alem-research
 .\alem.ps1 setup --create-venv
 .\alem.ps1 health --strict
 .\alem.ps1 project create "My research topic"
+.\alem.ps1 context plan "Find papers and verify the citations"
 ```
 
 ### macOS or Linux
@@ -90,10 +93,21 @@ cd alem-research
 ./alem setup --create-venv
 ./alem health --strict
 ./alem project create "My research topic"
+./alem context plan "Find papers and verify the citations"
 ```
 
 Setup writes mutable state and optional dependencies beneath `.alem/` in the checkout. It does not
 modify `~/.codex`, `~/.claude`, `~/.agents`, or a global Python or Node environment.
+
+Lazy context mode is the default. Setup makes the `alem-router` skill discoverable and keeps the
+rest of the installed ecosystem in a compact local index. A task plan selects the relevant skill
+files and capabilities without placing every integration in the agent's starting context:
+
+```bash
+./alem context plan "Extract evidence from these papers and verify the manuscript citations"
+./alem context explain <plan-id>
+./alem context activate <plan-id>
+```
 
 ## Research workspace
 
@@ -136,6 +150,11 @@ Supplied research tools are integrated through the same workspace-local extensio
 current upstream integrations and their limits are documented in
 [`docs/upstream-integrations.md`](docs/upstream-integrations.md). Catalog plugins discover
 candidates; they do not silently install or trust linked projects.
+
+Capability requests and responses are validated against contracts under `contracts/capabilities/`.
+Large results are written as project artifacts with source, evidence status, lineage, and a digest;
+the conversation needs only their compact references. Installed, enabled, execution-approved, and
+task-activated are separate states.
 
 Setup installs the official providers automatically. Inspect or repair the catalogue manually with:
 
@@ -223,6 +242,9 @@ and [security policy](SECURITY.md) before enabling third-party code.
 | --- | --- |
 | [Getting started](docs/getting-started.md) | Setup, health checks, and the first project |
 | [Architecture](docs/architecture.md) | Core boundaries, extension contracts, and routing |
+| [Context routing](docs/context-routing.md) | Lazy task selection, activation, and context budgets |
+| [Capability contracts](docs/capability-contracts.md) | Validated provider I/O and artifact provenance |
+| [Workflow runtime](docs/workflow-runtime.md) | Resumable runs and human approval gates |
 | [Research lifecycle](docs/research-lifecycle.md) | The end-to-end research process |
 | [Knowledge system](docs/knowledge-system.md) | Wiki structure, provenance, and maintenance |
 | [Plugin development](docs/plugin-development.md) | Public API, manifests, templates, and testing |
@@ -254,7 +276,7 @@ please cite the software. GitHub and compatible reference managers can read the 
   author  = {Mohamad Numan Alali},
   title   = {Alem Research: An Open-Source AI Research Workspace},
   year    = {2026},
-  version = {0.2.0},
+  version = {1.0.0},
   url     = {https://github.com/mnmalali/Alem-Research},
   license = {MIT}
 }

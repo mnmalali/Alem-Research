@@ -7,7 +7,7 @@ version = "0.1.0"
 api = ">=1.0,<2.0"
 description = "A third-party-style example that implements academic_search using only Alem's documented public API."
 author = "Example community contributor"
-repository = "https://github.com/alem-research/alem-research"
+repository = "https://github.com/mnmalali/Alem-Research"
 license = "MIT"
 types = ["tool"]
 entrypoint = "plugin.py:plugin"

@@ -7,15 +7,20 @@ Alem versions three related surfaces independently:
 3. The strict plugin manifest has an integer `schema_version`; current schema
    is `1`.
 
+Alem 1.0 also introduces context-index/plan schema 1, artifact-record schema 1, workflow-run schema
+1, and integration-registry schema 2. Context indexes and inactive plans are regenerable runtime
+state. Artifact and workflow records are durable project provenance: a 1.x release may add optional
+fields but will not remove or reinterpret required schema-1 fields without a migration command.
+
 A plugin declares an API range such as `>=1.0,<2.0`. Installation refuses an
 incompatible range. Capability contracts also have versions: a provider of
 `academic_search` `1.0` is interchangeable only with consumers written for
 that contract.
 
 Execution requests name an exact `capability_version`, defaulting to `1.0` for
-the foundation API. Provider discovery and routing filter on that exact value
-before applying configured default/fallback IDs. There is no implicit
-major-version or minor-version coercion in schema 1.
+API 1. Provider discovery and routing filter on that exact value before applying configured
+default/fallback IDs. Registered contracts also validate provider input and output. There is no
+implicit major-version or minor-version coercion in schema 1.
 
 ## Compatibility rules
 

@@ -16,7 +16,7 @@ from alem.extensions import ExtensionError, PluginCatalogue, PluginManager
 from alem.workspace import Workspace
 
 
-def sync_all_skill_adapters(workspace: Workspace) -> dict[str, int]:
+def sync_all_skill_adapters(workspace: Workspace, *, mode: str | None = None) -> dict[str, int]:
     """Synchronize canonical and enabled plugin skills through one adapter layer."""
     config = load_config(workspace)
     catalogue: Path | None = None
@@ -35,7 +35,11 @@ def sync_all_skill_adapters(workspace: Workspace) -> dict[str, int]:
         # A damaged plugin never blocks core setup; generated plugin adapters
         # are removed until its integrity is restored and it is enabled again.
         plugin_skills = []
-    return sync_skill_adapters(workspace, plugin_skills=plugin_skills)
+    return sync_skill_adapters(
+        workspace,
+        plugin_skills=plugin_skills,
+        mode=mode or config.context.mode,
+    )
 
 
 def _configured_catalogue(workspace: Workspace, config) -> Path | None:
@@ -88,6 +92,9 @@ def initialize_workspace(
     created = workspace.ensure_runtime()
     plugins = _setup_plugins(workspace, config)
     adapters = sync_all_skill_adapters(workspace)
+    from alem.context import build_context_index
+
+    context_index = build_context_index(workspace)
     launcher = workspace.path("alem")
     if platform.system().lower() != "windows" and launcher.is_file():
         launcher.chmod(
@@ -107,6 +114,11 @@ def initialize_workspace(
         "created_paths": [str(path.relative_to(workspace.root)) for path in created],
         "skill_adapters": adapters,
         "plugins": plugins,
+        "context": {
+            "mode": config.context.mode,
+            "indexed_entries": len(context_index["entries"]),
+            "index_digest": context_index["digest"],
+        },
         "local_venv_created": venv_created,
         "scope_guarantee": "All recorded paths resolve inside the workspace root.",
     }

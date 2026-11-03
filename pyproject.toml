@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alem-research"
-version = "0.2.0"
+version = "1.0.0"
 description = "A local-first, extensible AI research workspace for Codex and Claude Code."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Mohamad Numan Alali" }]
 keywords = ["research", "academic", "agents", "codex", "claude", "plugins"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
@@ -21,7 +21,10 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering",
 ]
-dependencies = []
+dependencies = [
+  "jsonschema>=4.23,<5",
+  "PyYAML>=6.0.2,<7",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.8"]

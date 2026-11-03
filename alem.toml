@@ -16,6 +16,13 @@ catalogues = ["catalogue/index.toml"]
 require_install_approval = true
 require_execution_approval = true
 
+[context]
+mode = "lazy"
+max_skills = 5
+max_capabilities = 6
+max_context_tokens = 12000
+allow_expansion = true
+
 [capabilities.academic_search]
 default = "org.alem.openalex"
 fallbacks = ["org.alem.semantic-scholar"]

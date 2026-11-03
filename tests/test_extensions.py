@@ -220,7 +220,7 @@ def test_openalex_provider_normalizes_offline_response_and_mailto(monkeypatch) -
     query = parse_qs(urlparse(request.full_url).query)
     assert query["mailto"] == ["researcher@example.org"]
     assert query["per-page"] == ["2"]
-    assert request.get_header("User-agent") == "AlemResearch/0.1"
+    assert request.get_header("User-agent") == "AlemResearch/1.0"
     assert timeout == 20
 
 

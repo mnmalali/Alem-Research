@@ -11,3 +11,8 @@ replaces execution approval.
 Community submissions follow `CONTRIBUTING-PLUGINS.md` and arrive through a
 pull request that adds the plugin source (or, in a later API version, a pinned
 source archive), catalogue entry, tests, and license information.
+
+The catalogue answers what can be inspected or installed. The separate
+`integrations/registry.toml` answers how far an upstream has progressed from discovery to an
+adapted, contract-tested, or workflow-proven integration. Trust and maturity are intentionally
+independent.

@@ -36,6 +36,8 @@ On Windows PowerShell, keep the same workspace-local boundary:
 - New integrations are plugins unless they implement essential workspace mechanics.
 - Runtime writes and dependencies stay beneath `.alem/`.
 - Agent instructions have one canonical source; adapters remain small and regenerable.
+- New skills and tools remain lazy-indexable; do not expose an entire upstream library at startup.
+- Capability inputs and outputs use versioned contracts and durable results use artifact records.
 - Missing optional integrations fail clearly and do not disable unrelated research work.
 - Evidence metadata must identify what was verified and what remains interpretation or hypothesis.
 - No feature is marked complete only because files or stubs exist.

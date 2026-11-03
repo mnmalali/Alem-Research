@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from alem.config import load_config
+from alem.context import build_context_index
 from alem.errors import AlemError
 from alem.setup_workspace import sync_all_skill_adapters
 from alem.workspace import Workspace
@@ -164,6 +165,7 @@ def _plugin_install(arguments: argparse.Namespace, workspace: Workspace) -> int:
         approved=True,
         install_python_dependencies=arguments.with_python_dependencies,
     )
+    build_context_index(workspace)
     print("Installed locally (disabled): " + ", ".join(item.id for item in installed.plugins))
     print("Review, then run `alem plugin enable <id> --approve` to approve execution.")
     return 0
@@ -177,6 +179,7 @@ def _plugin_enable(arguments: argparse.Namespace, workspace: Workspace) -> int:
     # Re-open to synchronize any configured capability default/fallback now available.
     _manager(workspace)
     sync_all_skill_adapters(workspace)
+    build_context_index(workspace)
     print(f"Enabled and execution-approved: {arguments.plugin}")
     return 0
 
@@ -184,6 +187,7 @@ def _plugin_enable(arguments: argparse.Namespace, workspace: Workspace) -> int:
 def _plugin_disable(arguments: argparse.Namespace, workspace: Workspace) -> int:
     _manager(workspace).disable(arguments.plugin)
     sync_all_skill_adapters(workspace)
+    build_context_index(workspace)
     print(f"Disabled: {arguments.plugin}")
     return 0
 
@@ -195,6 +199,7 @@ def _plugin_remove(arguments: argparse.Namespace, workspace: Workspace) -> int:
         )
     _manager(workspace).remove(arguments.plugin, purge_data=arguments.purge_data)
     sync_all_skill_adapters(workspace)
+    build_context_index(workspace)
     print(
         f"Removed plugin code and dependencies: {arguments.plugin}; "
         f"data {'removed' if arguments.purge_data else 'preserved'}"
@@ -212,6 +217,7 @@ def _plugin_update(arguments: argparse.Namespace, workspace: Workspace) -> int:
         install_python_dependencies=arguments.with_python_dependencies,
     )
     sync_all_skill_adapters(workspace)
+    build_context_index(workspace)
     print("Updated locally and disabled pending renewed execution approval: " + plan.plugins[-1].id)
     return 0
 
@@ -397,6 +403,13 @@ def _capability_route(arguments: argparse.Namespace, workspace: Workspace) -> in
     return 0
 
 
+def _capability_describe(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    from alem.contracts import ContractRegistry
+
+    _json(ContractRegistry(workspace).describe(arguments.capability, arguments.capability_version))
+    return 0
+
+
 def _input_payload(arguments: argparse.Namespace, workspace: Workspace) -> dict[str, Any]:
     if arguments.input_file:
         candidate = Path(arguments.input_file)
@@ -543,6 +556,13 @@ def register_commands(commands: argparse._SubParsersAction[argparse.ArgumentPars
     providers.add_argument("--all", action="store_true")
     providers.add_argument("--json", action="store_true")
     providers.set_defaults(handler=_capability_providers)
+
+    describe = capability_commands.add_parser(
+        "describe", help="show the machine-readable contract for a capability"
+    )
+    describe.add_argument("capability")
+    describe.add_argument("--capability-version", default="1.0")
+    describe.set_defaults(handler=_capability_describe)
 
     route = capability_commands.add_parser("route", help="set a workspace-local provider order")
     route.add_argument("capability")

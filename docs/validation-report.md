@@ -1,20 +1,27 @@
-# Foundation validation report
+# Alem 1.0 validation report
 
-Validation date: 2026-10-31 (Asia/Dubai)
+Validation date: 2026-11-03 (Asia/Dubai)
 Host exercised: Windows 11, Python 3.14.0
-Scope: local foundation and plugin acceptance checks
+Scope: local 1.0 core, context, workflow, artifact, integration, and plugin acceptance checks
 
 ## Automated checks
 
 | Check | Result | Evidence |
 | --- | --- | --- |
 | Python compilation | Passed | `python -m compileall -q src` |
-| Test suite | Passed, 41; skipped, 1 | `.alem/venv/Scripts/python -m pytest -q` |
-| Core and CLI tests | Passed, 20; skipped, 1 | Containment, setup/adapters, project/export privacy, knowledge, CLI/starter |
+| Test suite | Passed, 50; skipped, 1 | `.alem/venv/Scripts/python -m pytest -q` |
+| Core and CLI tests | Passed | Containment, setup/adapters, project/export privacy, knowledge, CLI/starter |
 | Extension tests | Passed, 21 | Manifests, providers, approvals, lifecycle, dependencies, assets, routing, rollback |
+| Context scaling | Passed | Adding 120 skills still generated one startup adapter in lazy mode |
+| Contract and artifact tests | Passed | JSON contract rejection and artifact tamper detection |
+| Workflow state and gates | Passed | Resume, expected outputs, approval blocking, completion |
+| Integration consistency | Passed, 12 records | Schema-2 fixture and `alem integration validate` |
+| Bundled workflow validation | Passed | Full lifecycle, literature review, and research design |
 | Ruff | Passed | Workspace-local Ruff 0.17.3: `python -m ruff check .` |
 | Repository whitespace | Passed | `git diff --check` |
 | Health check | Passed, no warnings | `.\alem.ps1 health --strict` |
+| Package dependency check | Passed | `python -m pip check` |
+| Wheel build | Passed | `alem_research-1.0.0-py3-none-any.whl` |
 
 The skipped test attempts to create a symbolic link and verify export rejection. Windows denied link
 creation to the current non-elevated account (`WinError 1314`); the same production path also rejects
@@ -50,7 +57,21 @@ A bounded live query (`open science reproducibility`, limit 1) produced:
 The Semantic Scholar result is recorded as a service/rate-limit failure, not a passing live test.
 Both provider implementations also passed offline response-mapping tests, including DOI/identifier
 normalization, missing fields, optional OpenAlex `mailto`, and the optional Semantic Scholar API-key
-header. A keyed or later Semantic Scholar live smoke test is still required before a stable release.
+header. Service availability remains an operational property rather than a guarantee of the Alem
+core release.
+
+## Context, contracts, artifacts, and workflows
+
+Lazy setup exposed one `alem-router` adapter for each supported host while indexing 27 locally
+available entries in the exercised workspace. A realistic literature-and-citation task selected
+the relevant literature/citation skills and `academic_search` without exposing unrelated analysis
+or external-agent tooling. The automated scaling fixture added 120 skills without increasing the
+startup adapter count, and a source-fingerprint fixture proved stale indexes rebuild after skill
+metadata changes.
+
+Registered capability schemas were checked with JSON Schema Draft 2020-12. Artifact tests proved
+that content changes invalidate recorded SHA-256 digests. Workflow tests exercised an agent step,
+an expected output, an approval block, a recorded approver/decision, resume, and final completion.
 
 ## Not yet verified
 
@@ -60,7 +81,10 @@ header. A keyed or later Semantic Scholar live smoke test is still required befo
   metadata parser/client support is stale, and Claude Code 2.1.143 returned an invalid OAuth-token
   error. These are external client/auth blockers, not passing discovery checks;
 - a clean-host Python 3.11 and 3.13 matrix outside GitHub Actions;
-- optional integrations marked planned in `integrations/registry.toml`; and
-- OS-enforced sandbox execution, which is intentionally not implemented in v0.1.
+- catalog entries with `discovered` or `assessed` maturity, which are explicitly not executable
+  integrations; and
+- OS-enforced sandbox execution, which is intentionally not claimed by 1.0.
 
-Follow [`manual-validation.md`](manual-validation.md) before publishing a stable release.
+Follow [`manual-validation.md`](manual-validation.md) before making platform- or client-specific
+claims beyond the recorded Windows checks. The configured GitHub Actions matrix runs Python 3.11
+and 3.13 on Windows, Linux, and macOS after upload.

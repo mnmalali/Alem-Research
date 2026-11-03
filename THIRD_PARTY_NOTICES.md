@@ -1,6 +1,6 @@
 # Third-party notices
 
-The foundation repository now contains a small, explicitly curated set of third-party skill and
+The repository contains a small, explicitly curated set of third-party skill and
 catalog assets plus Alem-written adapters. They retain their own licenses and are isolated under
 `plugins/community/`; they are not part of Alem's required core runtime. Exact source revisions,
 copied paths, and integration decisions are recorded in
@@ -17,7 +17,9 @@ Included notices:
 - `plugins/community/feynman-bridge`: an Alem-written adapter only; Feynman remains a separately
   installed MIT-licensed runtime and is not vendored.
 
-The Alem runtime uses only the Python standard library. Development tools installed through the
+The Alem 1.0 runtime directly depends on PyYAML (MIT) for workflow specifications and jsonschema
+(MIT) for capability-contract validation. Their transitive Python packages retain their own
+licenses and are installed by the package manager. Development tools installed through the
 optional `dev` extra retain their own licenses. Plugins may declare separate dependencies; their
 licenses must be reviewed before catalogue acceptance and installation remains explicit.
 

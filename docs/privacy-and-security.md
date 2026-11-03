@@ -19,7 +19,7 @@ Codex, Claude Code, Python, or Node configuration.
 
 ## Threat model
 
-Manifests support review and policy decisions; they do not constrain malicious code. The foundation
+Manifests support review and policy decisions; they do not constrain malicious code. The current
 release provides digest-bound approvals and a subprocess boundary, but not a hardened sandbox. A
 malicious approved plugin may access anything available to the user's process. Use an OS sandbox,
 container, disposable VM, or similarly enforced boundary for untrusted code. More detail is in

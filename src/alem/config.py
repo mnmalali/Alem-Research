@@ -22,12 +22,24 @@ class CapabilityRoute:
 
 
 @dataclass(frozen=True, slots=True)
+class ContextSettings:
+    """Controls how much of the installed ecosystem is exposed to an agent."""
+
+    mode: str
+    max_skills: int
+    max_capabilities: int
+    max_context_tokens: int
+    allow_expansion: bool
+
+
+@dataclass(frozen=True, slots=True)
 class AlemConfig:
     workspace: Workspace
     raw: dict[str, Any]
     workspace_version: int
     plugin_api_version: str
     capability_routes: dict[str, CapabilityRoute]
+    context: ContextSettings
 
     def route_for(self, capability: str) -> CapabilityRoute:
         return self.capability_routes.get(capability, CapabilityRoute(None, ()))
@@ -69,4 +81,28 @@ def load_config(workspace: Workspace | str | Path | None = None) -> AlemConfig:
         ordered_fallbacks = tuple(item for item in fallbacks if item != default)
         routes[name] = CapabilityRoute(default, ordered_fallbacks)
 
-    return AlemConfig(ws, raw, version, api_version, routes)
+    context_raw = raw.get("context", {})
+    if not isinstance(context_raw, dict):
+        raise ConfigurationError("[context] must be a table")
+    mode = context_raw.get("mode", "eager")
+    if mode not in {"lazy", "eager"}:
+        raise ConfigurationError("context.mode must be 'lazy' or 'eager'")
+
+    def positive_integer(name: str, default: int) -> int:
+        value = context_raw.get(name, default)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            raise ConfigurationError(f"context.{name} must be a positive integer")
+        return value
+
+    allow_expansion = context_raw.get("allow_expansion", True)
+    if not isinstance(allow_expansion, bool):
+        raise ConfigurationError("context.allow_expansion must be boolean")
+    context = ContextSettings(
+        mode=mode,
+        max_skills=positive_integer("max_skills", 5),
+        max_capabilities=positive_integer("max_capabilities", 6),
+        max_context_tokens=positive_integer("max_context_tokens", 12000),
+        allow_expansion=allow_expansion,
+    )
+
+    return AlemConfig(ws, raw, version, api_version, routes, context)

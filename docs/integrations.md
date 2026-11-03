@@ -12,8 +12,19 @@ Run:
 ```
 
 The command reads `integrations/registry.toml`, which distinguishes bundled plugins from planned
-work. `OpenAlex` and `Semantic Scholar` are the only network integrations implemented in the
-foundation release. Both expose the abstract `academic_search` capability and can be replaced.
+work and separates integration maturity from trust. Validate consistency with:
+
+```bash
+./alem integration validate
+```
+
+OpenAlex and Semantic Scholar provide interchangeable network search. Feynman is an opt-in external
+research-agent bridge. Orchestra contributes lazy-indexed skill assets, while the Wenyu and Awesome
+catalogs provide offline discovery only. A catalog result is not an installed integration.
+
+Maturity values are `discovered`, `assessed`, `adapted`, `contract-tested`, `workflow-proven`,
+`blocked`, and `deprecated`. Trust is tracked separately as `official`, `verified`, `unverified`,
+or `not-executable`.
 
 ## Cost and privacy categories
 
@@ -33,4 +44,5 @@ topics or unpublished data without reviewing the service's terms and privacy pol
 The capability router tries only installed, enabled, execution-approved, compatible providers. A
 provider timeout, invalid response, missing optional credential, or rate-limit response is recorded
 and permits a configured fallback. It never fabricates an empty search result as a successful
-response. Workflows must record database, query, retrieval date, and provider metadata.
+response. Inputs and outputs with registered capability contracts are schema-validated. Workflows
+must record database, query, retrieval date, and provider metadata.

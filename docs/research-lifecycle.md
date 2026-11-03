@@ -1,6 +1,6 @@
 # Research lifecycle
 
-Alem represents research as persistent stages, not a single conversation. A stage consumes checked-in project artifacts and produces the next set of reviewable artifacts. `workflows/full-research-lifecycle.yaml` is the machine-readable map.
+Alem represents research as persistent stages, not a single conversation. A stage consumes checked-in project artifacts and produces the next set of reviewable artifacts. `workflows/full-research-lifecycle.yaml` is the machine-readable map and `alem workflow` maintains resumable run state.
 
 | Stage | Main artifact | Human gate |
 |---|---|---|
@@ -24,6 +24,10 @@ Alem represents research as persistent stages, not a single conversation. A stag
 ## Resume protocol
 
 On entry, read `PROJECT.md`, `STATUS.md`, the current stage README, and all referenced evidence records. Confirm that required upstream gates are recorded. On exit, write artifacts atomically, update `STATUS.md`, and leave a handoff containing unresolved decisions and the exact next command or workflow.
+
+Workflow commands never substitute for scientific judgment. Agent-authored steps require explicit
+completion, expected artifacts are checked, and declared human gates block downstream progress
+until an approver and decision are recorded.
 
 ## Capability routing
 

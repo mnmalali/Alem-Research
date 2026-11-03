@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "capability": "research_skill_catalog",
+  "version": "1.0",
+  "input": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "query": {"type": "string"},
+      "limit": {"type": "integer", "minimum": 1, "maximum": 100}
+    },
+    "additionalProperties": false
+  },
+  "output": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["query", "items", "total"],
+    "properties": {
+      "query": {"type": "string"},
+      "items": {"type": "array", "items": {"type": "object"}},
+      "total": {"type": "integer", "minimum": 0}
+    },
+    "additionalProperties": false
+  }
+}

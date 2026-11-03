@@ -719,6 +719,11 @@ class PluginManager:
         operation: str = "invoke",
         credentials: Mapping[str, str] | None = None,
     ) -> ExecutionResponse:
+        from alem.contracts import ContractRegistry
+
+        contract = ContractRegistry(self.workspace).get(capability, capability_version)
+        if contract is not None:
+            contract.validate_input(payload)
         state = self._load_state()
         candidates = self.registry(enabled_only=True).resolve(
             capability, provider, capability_version=capability_version
@@ -773,6 +778,8 @@ class PluginManager:
                     else None
                 )
                 response = self.runtime.invoke(manifest, request, dependency_root=dependency_root)
+                if contract is not None:
+                    contract.validate_output(response.output)
                 metadata = dict(response.metadata)
                 metadata["provider"] = manifest.id
                 metadata["plugin_version"] = manifest.version

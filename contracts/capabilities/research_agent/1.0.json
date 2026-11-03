@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "capability": "research_agent",
+  "version": "1.0",
+  "input": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["topic"],
+    "properties": {
+      "topic": {"type": "string", "minLength": 1},
+      "mode": {"enum": ["research", "lit", "deepresearch", "draft", "recipe", "autoresearch"]}
+    },
+    "additionalProperties": false
+  },
+  "output": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["topic", "mode", "stdout", "stderr", "workspace"],
+    "properties": {
+      "topic": {"type": "string"},
+      "mode": {"type": "string"},
+      "stdout": {"type": "string"},
+      "stderr": {"type": "string"},
+      "workspace": {"type": "string"}
+    },
+    "additionalProperties": false
+  }
+}

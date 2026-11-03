@@ -23,12 +23,21 @@ A community PR must include:
    responses and contain no secrets.
 6. The plugin's license and all required third-party notices. The submitter is
    responsible for redistribution rights.
+7. For every contributed skill whose activation boundaries are not completely captured by its
+   concise frontmatter description, a schema-1 `routing.toml` declaring `use_when`, `avoid_when`,
+   lifecycle stages, inputs, outputs, mutation class, network use, and estimated context size.
+8. A schema-2 record in `integrations/registry.toml` that truthfully separates trust from maturity.
+   Use `discovered`, `assessed`, `adapted`, `contract-tested`, or `workflow-proven`; catalog presence
+   alone never qualifies as an adapted integration.
 
 Start with `alem plugin create <name>` (generated under
 `plugins/community/<name>` unless `--path` is supplied), then run
 `alem plugin validate <path>` and the full test suite. The community static-search example demonstrates the
 expected layout and lifecycle without pretending its synthetic record is a
 real source.
+
+Run `alem integration validate` and at least one realistic `alem context plan` fixture before
+submission. A new integration must not cause initial agent context to grow in lazy mode.
 
 When contributing an external research tool, add an Alem adapter or a reviewed declarative asset
 under `plugins/community/`; do not make the upstream repository a hidden runtime dependency.

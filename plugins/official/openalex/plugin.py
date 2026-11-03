@@ -37,7 +37,7 @@ class OpenAlexSearch(BaseExtension):
         if isinstance(credentials, dict) and credentials.get("OPENALEX_MAILTO"):
             params["mailto"] = credentials["OPENALEX_MAILTO"]
         url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
-        http_request = urllib.request.Request(url, headers={"User-Agent": "AlemResearch/0.1"})
+        http_request = urllib.request.Request(url, headers={"User-Agent": "AlemResearch/1.0"})
         with urllib.request.urlopen(http_request, timeout=20) as response:
             document = json.load(response)
         items = []

@@ -24,7 +24,7 @@ class SemanticScholarSearch(BaseExtension):
         url = "https://api.semanticscholar.org/graph/v1/paper/search?" + urllib.parse.urlencode(
             {"query": query, "limit": str(limit), "fields": fields}
         )
-        headers = {"User-Agent": "AlemResearch/0.1"}
+        headers = {"User-Agent": "AlemResearch/1.0"}
         credentials = request.context.get("credentials", {})
         if isinstance(credentials, dict) and credentials.get("SEMANTIC_SCHOLAR_API_KEY"):
             headers["x-api-key"] = credentials["SEMANTIC_SCHOLAR_API_KEY"]

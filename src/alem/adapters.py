@@ -70,6 +70,7 @@ def sync_skill_adapters(
     workspace: Workspace,
     *,
     plugin_skills: Iterable[tuple[str, Path]] = (),
+    mode: str = "eager",
 ) -> dict[str, int]:
     canonical = workspace.path("skills")
     if not canonical.exists():
@@ -80,9 +81,14 @@ def sync_skill_adapters(
             "preserved": 0,
             "removed": 0,
         }
-    skills = sorted(path.parent for path in canonical.glob("*/SKILL.md"))
+    all_skills = sorted(path.parent for path in canonical.glob("*/SKILL.md"))
+    if mode not in {"lazy", "eager"}:
+        raise ValueError("adapter mode must be 'lazy' or 'eager'")
+    router = canonical / "alem-router"
+    # A workspace without the v1 router remains usable during migration.
+    skills = [router] if mode == "lazy" and (router / "SKILL.md").is_file() else all_skills
     plugin_sources: list[tuple[str, Path]] = []
-    for plugin_id, asset in plugin_skills:
+    for plugin_id, asset in (() if mode == "lazy" else plugin_skills):
         candidate = workspace.assert_local(asset)
         skill_file = candidate / "SKILL.md" if candidate.is_dir() else candidate
         if skill_file.is_file():

@@ -9,9 +9,10 @@ provider implementations, and agent-facing instructions are replaceable modules 
 flowchart LR
     U[Researcher] --> C[alem CLI]
     A[Codex or Claude Code] --> I[Project-local instructions]
-    I --> S[Canonical skills]
+    I --> X[Task context router]
+    X --> S[Selected canonical skills]
     C --> W[Workspace services]
-    C --> R[Plugin registry and capability router]
+    C --> R[Capability gateway and provider router]
     R --> P1[Provider plugin A]
     R -. fallback .-> P2[Provider plugin B]
     W --> K[Markdown knowledge and evidence]
@@ -24,6 +25,17 @@ The core owns workspace discovery, guarded local state, configuration, validatio
 commands, and the versioned extension contract. It does not own an academic database, coding agent,
 model provider, or hosted catalogue.
 
+## Progressive context boundary
+
+Installation does not imply context exposure. In lazy mode, coding agents discover only the Alem
+router. The router asks the local index for a bounded plan, reads only the selected canonical skill
+files, and invokes integrations through one capability gateway. Provider code stays outside model
+context. See [`context-routing.md`](context-routing.md).
+
+Research outputs cross integration boundaries as contract-validated JSON or typed artifact
+references. See [`capability-contracts.md`](capability-contracts.md). Workflow state and human
+decisions remain durable project files; see [`workflow-runtime.md`](workflow-runtime.md).
+
 ## Stable and replaceable surfaces
 
 | Surface | Stability | Location | Rule |
@@ -33,6 +45,9 @@ model provider, or hosted catalogue.
 | Workspace schema v1 | Public configuration | `alem.toml` | Migrations are required for breaking changes |
 | CLI | User-facing | `alem` / `alem.ps1` | Commands report implemented state truthfully |
 | Runtime internals | Private | other `src/alem/**` modules | May evolve within a minor release |
+| Context plan v1 | Persisted runtime state | `.alem/state/context/` | Task-scoped and regenerable |
+| Artifact envelope v1 | Public project record | `projects/*/provenance/artifacts/` | Additive metadata evolution only |
+| Workflow run v1 | Public project record | `projects/*/provenance/workflow-runs/` | Human gates remain explicit |
 | Skills and workflows | Content | `skills/`, `workflows/` | Canonical files are independent of agent adapters |
 
 ## Capability routing
@@ -53,7 +68,7 @@ inside the repository and is ignored by Git. Research projects and exports are a
 default because they may be private.
 
 Third-party code has two approval gates: installation and execution. Alem executes plugins in a
-separate process, but the foundation release does **not** provide a hardened operating-system
+separate process, but the current release does **not** provide a hardened operating-system
 sandbox. Approval, manifests, and process separation are not security isolation. Review
 [`plugin-security.md`](plugin-security.md) before enabling third-party code.
 
@@ -64,5 +79,5 @@ loading guidance. Canonical skill content is kept once in `skills/`. `alem setup
 discovery adapters in `.agents/skills/` and `.claude/skills/`; adapters point back to the canonical
 file and are safe to regenerate. No command writes to `~/.codex`, `~/.claude`, or `~/.agents`.
 
-The repository can verify files and adapter structure automatically. Actual loading by each agent
+The repository can verify files, the lazy router, and adapter structure automatically. Actual loading by each agent
 must still be confirmed using the manual compatibility checks before a release.

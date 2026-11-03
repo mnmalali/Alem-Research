@@ -96,7 +96,7 @@ The default branch was updated on 2026-10-30 and release `v0.5.61` was published
 
 ### License and Alem use
 
-The full MIT license grants reuse subject to retaining its copyright and permission notice in copies or substantial portions. The foundation does not copy Feynman code, so no vendored notice is currently required. Alem may later provide an **optional, capability-adapted subprocess integration** after the user explicitly installs and approves a pinned Feynman version inside the workspace. Useful patterns to learn from are evidence sidecars, verifier separation, narrow research roles, failure-aware API adapters, and workflow-specific outputs.
+The full MIT license grants reuse subject to retaining its copyright and permission notice in copies or substantial portions. Alem does not copy Feynman code, so no vendored notice is currently required. Alem provides an **optional, capability-adapted subprocess integration** after the user explicitly installs and approves a pinned Feynman version inside the workspace. Useful patterns to learn from are evidence sidecars, verifier separation, narrow research roles, failure-aware API adapters, and workflow-specific outputs.
 
 ## 3. Orchestra Research AI Research Skills
 
@@ -128,7 +128,7 @@ The root `package.json` says `ISC`, while the repository license and shipped ins
 
 ### License and Alem use
 
-The repository's full MIT license was inspected. Any copied or adapted substantial content must retain the upstream copyright and permission notice and be recorded in Alem's attribution register. The foundation copies none of it. Alem may selectively adapt structural practices—concise frontmatter, progressive disclosure, testable checklists, and per-skill quality gates—after checking each candidate skill for relevance, accuracy, dependencies, license, and duplication.
+The repository's full MIT license was inspected. Any copied or adapted substantial content must retain the upstream copyright and permission notice and be recorded in Alem's attribution register. Alem now includes six reviewed skill assets with the upstream MIT notice and may selectively add more after checking each candidate for relevance, accuracy, dependencies, license, and duplication.
 
 ## 4. WenyuChiou/ai-research-skills
 
@@ -172,14 +172,14 @@ The list is dedicated under CC0-1.0; its complete waiver/fallback license was in
 
 ## Licensing and dependency assessment
 
-### Foundation dependency policy
+### Alem dependency policy
 
-| Class | Foundation decision |
+| Class | Alem decision |
 | --- | --- |
 | Required dependencies from these upstreams | None. |
-| Vendored source or skill text | None in the foundation. |
-| Optional executable integration | Feynman may be wrapped later through Alem's capability API, pinned and installed in the workspace only. |
-| Optional skill import | One skill at a time, after relevance, security, license, dependency, and duplication review. |
+| Vendored source or skill text | Six reviewed Orchestra skill assets with the retained MIT notice. |
+| Optional executable integration | Feynman is wrapped through Alem's capability API and remains separately pinned and workspace-local. |
+| Optional skill import | Reviewed, namespaced assets selected for relevance and loaded lazily by task. |
 | External catalog data | Reference-only; never treated as an executable trust signal. |
 
 For future adoption, Alem must record the exact upstream URL, commit/tag, file paths, license, local modifications, dependency lock, and retained notices. A mutable branch name or `curl | shell` command is not a reproducible pin.

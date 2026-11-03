@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "capability": "academic_search",
+  "version": "1.0",
+  "input": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["query"],
+    "properties": {
+      "query": {"type": "string", "minLength": 1},
+      "limit": {"type": "integer", "minimum": 1, "maximum": 100}
+    },
+    "additionalProperties": true
+  },
+  "output": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["query", "items", "total", "retrieved_at", "database"],
+    "properties": {
+      "query": {"type": "string"},
+      "total": {"type": ["integer", "null"], "minimum": 0},
+      "retrieved_at": {"type": "string", "minLength": 1},
+      "database": {"type": "string", "minLength": 1},
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["title", "authors", "year", "doi", "url", "external_id", "abstract", "citation_count", "source", "verification_status"],
+          "properties": {
+            "title": {"type": ["string", "null"]},
+            "authors": {"type": "array", "items": {"type": "string"}},
+            "year": {"type": ["integer", "null"]},
+            "doi": {"type": ["string", "null"]},
+            "url": {"type": ["string", "null"]},
+            "external_id": {"type": ["string", "null"]},
+            "abstract": {"type": ["string", "null"]},
+            "citation_count": {"type": ["integer", "null"], "minimum": 0},
+            "source": {"type": "string", "minLength": 1},
+            "verification_status": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "additionalProperties": true
+  }
+}

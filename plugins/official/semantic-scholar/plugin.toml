@@ -7,7 +7,7 @@ version = "0.1.0"
 api = ">=1.0,<2.0"
 description = "Search Semantic Scholar through the interchangeable academic_search capability."
 author = "Alem Research maintainers"
-repository = "https://github.com/alem-research/alem-research"
+repository = "https://github.com/mnmalali/Alem-Research"
 license = "MIT"
 types = ["tool"]
 entrypoint = "plugin.py:plugin"

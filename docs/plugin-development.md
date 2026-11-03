@@ -1,6 +1,6 @@
 # Plugin development kit
 
-Status: extension API `1.0`, manifest schema `1`, Alem `0.1` foundation.
+Status: extension API `1.0`, manifest schema `1`, Alem `1.0.0` stable release.
 
 Alem plugins add providers without changing core code. Workflows request a
 capability such as `academic_search`; routing selects an enabled provider at
@@ -11,12 +11,18 @@ marketplace service.
 Executable tools, agents, skills, and workflows share the versioned `invoke`
 contract and capability router. Declarative skill/agent/workflow paths are
 validated under `[assets]` and exposed by
-`PluginManager.discover_assets(...)`. Codex and Claude adapters consume that
-same enabled-skill view and generate namespaced, ignored pointer adapters on
-enable. Disabling, updating, or removing the plugin removes stale generated
-adapters. Declarative agent and workflow assets remain available through
+`PluginManager.discover_assets(...)`. In eager compatibility mode, Codex and Claude adapters
+consume that same enabled-skill view and generate namespaced, ignored pointer adapters on enable.
+Disabling, updating, or removing the plugin removes stale generated adapters. Declarative agent and
+workflow assets remain available through
 `PluginManager.discover_assets(...)` and `alem plugin assets`; plugins do not
 implement or duplicate agent-specific installation systems.
+
+In the default lazy context mode, plugin skills are indexed but do not each receive a host adapter.
+The `alem-router` selects a minimal set and reads the canonical asset path. Add a sibling
+`routing.toml` to a skill when its description alone cannot discriminate its lifecycle stage,
+inputs, outputs, mutation behavior, or activation boundaries. See
+[`context-routing.md`](context-routing.md).
 
 ## Start a plugin
 
@@ -134,6 +140,11 @@ metadata is not equivalent to independently verified full text.
 `org.alem.openalex` and `org.alem.semantic-scholar` implement this contract.
 A user can set one default and the other as fallback without editing a
 literature-review workflow.
+
+The machine-readable contract is `contracts/capabilities/academic_search/1.0.json`. A contributed
+provider must pass both its own tests and Alem's contract validation. New capability contracts
+belong under `contracts/capabilities/<name>/<version>.json`; breaking semantics require a new
+capability version rather than reinterpretation of an existing schema.
 
 ## Dependencies and installation
 
