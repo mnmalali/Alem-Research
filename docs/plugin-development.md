@@ -1,6 +1,6 @@
 # Plugin development kit
 
-Status: extension API `1.0`, manifest schema `1`, Alem `1.0.0` stable release.
+Status: extension API `1.0`, manifest schema `1`, integration registry schema `3`, Alem `1.0.0` stable release.
 
 Alem plugins add providers without changing core code. Workflows request a
 capability such as `academic_search`; routing selects an enabled provider at
@@ -43,7 +43,7 @@ my-plugin/
 └── tests/
 ```
 
-Validate before installation:
+Validate a local development plugin before submitting it:
 
 ```console
 alem plugin validate path/to/my-plugin
@@ -57,6 +57,50 @@ with `--approve` records installation approval. Enabling executable code
 requires its own explicit `--approve` flag and records approval of the current
 digest. The CLI never treats validation, installation, or enablement alone as
 implicit consent for another step.
+
+This manual path is for local development and candidates. An accepted release is provisioned
+automatically during normal setup and update after a maintainer approves its exact version and
+digest in `integrations/registry.toml`. Alem-authored and community-contributed releases use the
+same policy. The contributor badge is attribution only. Maintainer acceptance authorizes Alem's
+managed execution path; it does not create an OS sandbox or certify the truth of research output.
+
+## Contribution to automatic availability
+
+The supported lifecycle is:
+
+1. **Build an adapter.** Start from `alem plugin create`, import only
+   `alem.extensions.api`, and implement a versioned capability contract with normalized output
+   and provider/source provenance. Bundle code or dependencies only when redistribution rights
+   permit it; do not rely on global installers or hidden executables.
+2. **Validate locally.** Run `alem plugin validate <path>`, the plugin's tests, the full Alem test
+   suite, `alem integration validate`, and a bounded lazy `alem context plan` fixture. Use mocks
+   for service failures and keep credentials out of fixtures.
+3. **Submit a PR.** Include the plugin, catalogue entry, tests, documentation, source revision,
+   license and notice files, and a candidate integration record. Candidate submissions are not
+   provisioned or executed just because they appear in the catalogue.
+4. **Maintainer review and acceptance.** Review source and license rights, dependency closure,
+   network/filesystem/subprocess permissions, credentials, telemetry, supported platforms,
+   service costs, supply-chain risk, maintenance contact, compatibility, provenance, and failure
+   behavior. The maintainer changes the registry row to `acceptance = "accepted"`, records
+   authorship and contributor attribution, and pins the exact release version and source-tree
+   SHA-256 digest. A catalogue verification badge cannot perform this promotion.
+5. **Release.** The repository PR and release process carries the accepted registry and plugin
+   source together. `.github/CODEOWNERS` requests maintainer review; repository settings must
+   require code-owner approval for that review to be enforced. Pushing a `vX.Y.Z` tag matching
+   `pyproject.toml` runs `.github/workflows/release.yml`, which reruns lint, tests, and registry
+   validation before publishing the GitHub source release. The digest makes contents reproducible
+   relative to the checked-in registry, but is not a detached cryptographic signature.
+6. **Automatic availability.** After the release reaches a user's checkout/package, `alem setup`
+   or `alem update` verifies the pinned source and provisions it into `.alem/`, records its
+   provenance, and makes it discoverable through the existing capability/context routers. Users
+   do not clone, install, or enable accepted tools one by one.
+7. **Upgrade or rollback.** A new version and digest require the same compatibility and safety
+   review. Alem retains a prior content-addressed release; `alem plugin rollback <id>` restores and
+   pins it, and `alem plugin unpin <id>` resumes updates.
+
+`alem update` only reconciles accepted integrations in the release already present in the local
+repository/package. Updating Alem core itself is performed by the package manager or Git release
+process and is not an in-app self-update.
 
 ## Manifest schema 1
 
@@ -154,8 +198,9 @@ detection, and conflict detection. It is intentionally not a SAT solver.
 Dependencies are resolved from the same checked-in catalogue and installed
 dependency-first.
 
-Required plugin dependencies must be installed and enabled (with their own
-execution approval) before a dependent can be enabled. Alem refuses to disable
+Required plugin dependencies for local/manual installs must be installed and enabled before a
+dependent can be enabled. Accepted dependencies are released together and reconciled dependency
+first. Alem refuses to disable
 or remove a plugin while an enabled installed plugin requires it and lists the
 blocking dependent IDs. Optional dependency edges do not block lifecycle
 operations.
@@ -200,6 +245,10 @@ python -m pytest
 Tests must mock network failure and rate limiting, verify normalized output,
 avoid real credentials, and show that missing optional services fail without
 corrupting workspace state.
+
+Accepted-release CI also checks clean launcher bootstrap on Windows, Linux, and macOS before
+running `health --strict` and `--help`. The Windows launcher seeds PyYAML and all other declared
+core dependencies in the actual `.alem/venv` interpreter before importing the CLI.
 
 ## Security limitation
 

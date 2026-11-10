@@ -8,7 +8,10 @@ Alem versions three related surfaces independently:
    is `1`.
 
 Alem 1.0 also introduces context-index/plan schema 1, artifact-record schema 1, workflow-run schema
-1, and integration-registry schema 2. Context indexes and inactive plans are regenerable runtime
+1, and integration-registry schema 3. Registry schema 3 records acceptance, authorship, exact
+release version and digest, and readiness prerequisites. Schema 1 and 2 entries remain readable
+as candidates during migration; they are never promoted to accepted releases automatically.
+Context indexes and inactive plans are regenerable runtime
 state. Artifact and workflow records are durable project provenance: a 1.x release may add optional
 fields but will not remove or reinterpret required schema-1 fields without a migration command.
 

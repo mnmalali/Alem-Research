@@ -5,6 +5,7 @@ import json
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -316,7 +317,7 @@ def test_third_party_plugin_complete_local_lifecycle(tmp_path: Path) -> None:
     assert installed[0].execution_approved is False
 
     plugins.enable("dev.community.static-search")
-    with pytest.raises(RoutingError, match="ApprovalRequired"):
+    with pytest.raises(RoutingError, match="execution_approval_missing"):
         plugins.invoke("academic_search", {"query": "local-first research"})
 
     plugins.approve_execution("dev.community.static-search", approved=True)
@@ -378,8 +379,80 @@ def test_configured_default_and_fallback_provider(tmp_path: Path) -> None:
     assert runtime.called == ["org.alem.openalex", "org.alem.semantic-scholar"]
     assert response.metadata["provider"] == "org.alem.semantic-scholar"
     assert response.metadata["provider_failures"] == [
-        {"provider": "org.alem.openalex", "error_type": "PluginExecutionError"}
+        {
+            "provider": "org.alem.openalex",
+            "reason": "provider_execution_failed",
+            "error_type": "PluginExecutionError",
+        }
     ]
+
+
+def test_router_skips_blocked_preferred_provider_and_records_readiness_reason(
+    tmp_path: Path,
+) -> None:
+    runtime = _FallbackRuntime()
+    plugins = manager(tmp_path, runtime=runtime)
+    for plugin_id in ("org.alem.openalex", "org.alem.semantic-scholar"):
+        plugins.install(plugin_id, approved=True)
+        plugins.enable(plugin_id, approve_execution=True)
+    plugins.set_route(
+        "academic_search",
+        default="org.alem.openalex",
+        fallbacks=["org.alem.semantic-scholar"],
+    )
+    statuses = [
+        {
+            "plugin_id": "org.alem.openalex",
+            "capabilities": ["academic_search"],
+            "readiness": "missing-runtime",
+            "blockers": ["managed runtime is missing"],
+        },
+        {
+            "plugin_id": "org.alem.semantic-scholar",
+            "capabilities": ["academic_search"],
+            "readiness": "ready",
+            "blockers": [],
+        },
+    ]
+    with patch("alem.tool_status.list_tool_statuses", return_value=statuses):
+        response = plugins.invoke("academic_search", {"query": "provenance"})
+
+    assert runtime.called == ["org.alem.semantic-scholar"]
+    assert response.metadata["provider"] == "org.alem.semantic-scholar"
+    assert response.metadata["provider_failures"] == [
+        {"provider": "org.alem.openalex", "reason": "missing-runtime"}
+    ]
+
+
+def test_router_returns_actionable_block_when_all_accepted_providers_are_unready(
+    tmp_path: Path,
+) -> None:
+    runtime = _FallbackRuntime()
+    plugins = manager(tmp_path, runtime=runtime)
+    for plugin_id in ("org.alem.openalex", "org.alem.semantic-scholar"):
+        plugins.install(plugin_id, approved=True)
+        plugins.enable(plugin_id, approve_execution=True)
+    plugins.set_route(
+        "academic_search",
+        default="org.alem.openalex",
+        fallbacks=["org.alem.semantic-scholar"],
+    )
+    statuses = [
+        {
+            "plugin_id": plugin_id,
+            "capabilities": ["academic_search"],
+            "readiness": "missing-hardware",
+            "blockers": ["required GPU is unavailable"],
+        }
+        for plugin_id in ("org.alem.openalex", "org.alem.semantic-scholar")
+    ]
+    with (
+        patch("alem.tool_status.list_tool_statuses", return_value=statuses),
+        pytest.raises(RoutingError, match="alem tools status"),
+    ):
+        plugins.invoke("academic_search", {"query": "must not become evidence"})
+
+    assert runtime.called == []
 
 
 def test_routing_never_crosses_capability_contract_versions(tmp_path: Path) -> None:

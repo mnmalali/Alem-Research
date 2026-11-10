@@ -16,6 +16,7 @@
 </p>
 
 <p align="center">
+  <a href="#whats-new-in-10">What’s new in 1.0</a> ·
   <a href="#why-alem">Why Alem</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#extension-framework">Extensions</a> ·
@@ -27,6 +28,39 @@
 > **Stable 1.0 release:** Alem provides task-scoped context routing, resumable research workflows,
 > provenance-preserving artifacts, and workspace-local integrations. Third-party processes are not an
 > operating-system sandbox. Review their code and requested permissions before approval.
+
+## What’s new in 1.0
+
+Alem 1.0 turns the workspace into a scalable integration platform for AI research tools. GitHub
+projects can be adapted behind stable Alem capabilities and used together without placing every
+installed tool, skill, or provider into every agent conversation.
+
+| Improvement | What it provides |
+| --- | --- |
+| Task-scoped context | The `alem-router` selects only the skills and capabilities relevant to the current request. |
+| Constant startup footprint | Adding more integrations does not add more startup adapters in the default lazy mode. |
+| Composable integrations | Providers exchange contract-validated results and durable artifact references. |
+| Resumable research | Workflow runs preserve stage state, evidence, outputs, failures, and human decisions. |
+| Transparent trust | Integration maturity, review status, permissions, and execution approval remain separate. |
+| Stable contracts | Alem `1.0.0` keeps extension API `1.0`, plugin manifest schema `1`, and workspace schema `1`. |
+
+```text
+Research task
+     │
+     ▼
+Alem context router ── selects a small task-specific toolset
+     │
+     ▼
+Capability gateway ── routes to approved default and fallback providers
+     │
+     ▼
+Project artifacts ── preserve evidence, provenance, lineage, and integrity
+```
+
+The complete implementation and validation evidence is recorded in
+[`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md),
+[`CHANGELOG.md`](CHANGELOG.md), and the
+[`1.0 validation report`](docs/validation-report.md).
 
 ## Why Alem
 
@@ -42,7 +76,7 @@ independent of any single coding agent, search provider, model, or external serv
 | **Local first** | Projects, knowledge, configuration, plugins, and mutable state remain inside the repository. |
 | **Evidence before claims** | Workflows preserve provenance and separate verified facts from interpretation and uncertainty. |
 | **Provider neutral** | Workflows request capabilities such as `academic_search`, not hardcoded services. |
-| **Human controlled** | Important research decisions and all third-party plugin execution require explicit approval. |
+| **Human controlled** | Consequential research decisions and external writes retain explicit approval gates; accepted tool releases are maintainer-reviewed and managed automatically. |
 | **Reproducible by design** | Numbered lifecycle stages, run records, citation ledgers, and release checklists make work recoverable. |
 
 ## What is included
@@ -156,27 +190,29 @@ Large results are written as project artifacts with source, evidence status, lin
 the conversation needs only their compact references. Installed, enabled, execution-approved, and
 task-activated are separate states.
 
-Setup installs the official providers automatically. Inspect or repair the catalogue manually with:
+Setup provisions every maintainer-accepted release automatically, including both Alem-authored and
+community-contributed tools. Inspect acceptance and readiness with:
 
 ```bash
-./alem plugin search academic
-./alem plugin validate plugins/official/openalex
-./alem plugin install org.alem.openalex --approve
-./alem plugin enable org.alem.openalex --approve
+./alem tools list
+./alem tools status org.alem.openalex
+./alem tools doctor
 ./alem capability invoke academic_search --input '{"query":"open science","limit":3}'
 ```
 
-Install and enable `org.alem.semantic-scholar` to make the configured fallback available. Queries
-sent to external providers are network requests and should not be treated as private local
-processing.
+`alem update` reconciles accepted integration versions in the release already present locally; it
+does not self-update Alem core. A provider that needs credentials, hardware, a runtime, or a live
+service remains listed with a readiness status. Queries sent to external providers are network
+requests and should not be treated as private local processing.
 
 ### Plugin catalogue
 
-The checked-in [plugin catalogue](catalogue/index.toml) is the authoritative list of plugins
-available to Alem. Official plugins are installed and enabled automatically by `alem setup`.
-Community plugins remain opt-in and are classified as `verified` or `unverified`. Installation
-and execution of community plugins still require explicit approval; setup records the equivalent
-approval automatically only for official Alem-maintained plugins.
+The checked-in [plugin catalogue](catalogue/index.toml) lists discoverable sources. The
+maintainer-controlled [`integrations/registry.toml`](integrations/registry.toml) determines which
+exact releases are accepted and provisioned automatically by `alem setup` and `alem update`.
+Catalogue verification, acceptance, authorship, and runtime readiness are separate states. A
+community badge is attribution only; accepted Alem-authored and community-contributed tools use
+the same managed installation and routing policy. Catalog-only candidates are never provisioned.
 
 #### Official plugins
 
@@ -187,17 +223,20 @@ approval automatically only for official Alem-maintained plugins.
 
 #### Community plugins
 
-| Plugin | Verification | Capability | Description |
+| Plugin | Catalogue verification | Acceptance | Capability | Description |
 | --- | --- | --- | --- |
-| [`community.feynman-bridge`](plugins/community/feynman-bridge) | Verified | `research_agent` | Workspace-local bridge to the separately installed Feynman research agent. |
-| [`community.orchestra-research-skills`](plugins/community/orchestra-research-skills) | Verified | skills | Curated, namespaced research skills from Orchestra Research. |
-| [`community.wenyu-research-catalog`](plugins/community/wenyu-research-catalog) | Verified | `research_skill_catalog` | Offline catalog of research skills and runtime requirements. |
-| [`community.awesome-research-tools-catalog`](plugins/community/awesome-research-tools-catalog) | Verified | `research_tool_catalog` | Offline discovery catalog of research tools. |
-| [`dev.community.static-search`](examples/plugins/community-static-search) | Verified | `academic_search` | Deterministic example plugin used for lifecycle tests and learning. |
+| [`community.feynman-bridge`](plugins/community/feynman-bridge) | Verified | Candidate | `research_agent` | Bridge candidate; upstream runtime is not managed by Alem yet. |
+| [`community.orchestra-research-skills`](plugins/community/orchestra-research-skills) | Verified | Accepted | skills | Curated, namespaced research skills from Orchestra Research. |
+| [`community.wenyu-research-catalog`](plugins/community/wenyu-research-catalog) | Verified | Accepted | `research_skill_catalog` | Offline catalog of research skills and runtime requirements. |
+| [`community.awesome-research-tools-catalog`](plugins/community/awesome-research-tools-catalog) | Verified | Accepted | `research_tool_catalog` | Offline discovery catalog of research tools. |
+| [`dev.community.static-search`](examples/plugins/community-static-search) | Verified | Candidate | `academic_search` | Deterministic example plugin used for lifecycle tests and learning. |
 
-Community entries are reviewed contributions, not automatic endorsements. Their permissions,
-dependencies, licenses, privacy behavior, and evidence limitations must be checked before
-enablement.
+The list below includes catalog entries whether accepted or candidate. Check `alem tools list` for
+the accepted release set and readiness. A catalog discovery result is not an endorsement, accepted
+tool, or automatic install target. Readiness does not endorse claims or imply a security sandbox.
+The `community.*` plugin namespace is not an authorship badge; this release's accepted catalog
+adapters are marked `alem-official` in the release registry, while the automated acceptance fixture
+also verifies the same path for a `community-contributor` release.
 
 ### Build a plugin
 
@@ -227,7 +266,7 @@ counts, eligibility criteria, and exclusions support that claim.
 
 ## Security and privacy
 
-- Plugin installation and execution require separate, explicit approval.
+- Locally installed candidate plugins require separate explicit installation and execution approval; accepted releases are reviewed through the maintainer-controlled registry.
 - Dependencies are pinned, workspace-local, and checked against recorded digests.
 - Plugin manifests declare requested network, filesystem, credential, and execution permissions.
 - Permission declarations are policy and audit information—not an OS security boundary.

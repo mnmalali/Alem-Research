@@ -8,17 +8,20 @@ import os
 import re
 from dataclasses import asdict
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from alem.config import load_config
 from alem.context import build_context_index
 from alem.errors import AlemError
+from alem.integrations import load_integrations
 from alem.setup_workspace import sync_all_skill_adapters
+from alem.tool_status import list_tool_statuses
 from alem.workspace import Workspace
 
 from .catalogue import PluginCatalogue
 from .errors import ApprovalRequired
-from .manager import PluginManager
+from .manager import PluginManager, plugin_tree_digest
 from .manifest import Manifest, load_manifest, validate_manifest
 
 
@@ -92,16 +95,31 @@ def _plugin_list(arguments: argparse.Namespace, workspace: Workspace) -> int:
 
 def _plugin_search(arguments: argparse.Namespace, workspace: Workspace) -> int:
     entries = PluginCatalogue(_catalogue_path(workspace)).search(arguments.query or "")
+    accepted = {
+        item.plugin_id: item
+        for item in load_integrations(workspace)
+        if item.acceptance == "accepted" and item.plugin_id
+    }
+    values = [
+        {
+            **asdict(entry),
+            "acceptance": (
+                accepted[entry.id].acceptance if entry.id in accepted else "candidate"
+            ),
+            "authorship": accepted[entry.id].authorship if entry.id in accepted else "unknown",
+        }
+        for entry in entries
+    ]
     if arguments.json:
-        _json({"plugins": [asdict(entry) for entry in entries]})
+        _json({"plugins": values})
         return 0
     if not entries:
         print("No catalogue plugins matched")
         return 0
-    print("ID  VERSION  CHANNEL  VERIFICATION  TYPES  CAPABILITIES")
-    for entry in entries:
+    print("ID  VERSION  ACCEPTANCE  AUTHORSHIP  VERIFICATION  TYPES  CAPABILITIES")
+    for entry, value in zip(entries, values, strict=True):
         print(
-            f"{entry.id}  {entry.version}  {entry.channel}  "
+            f"{entry.id}  {entry.version}  {value['acceptance']}  {value['authorship']}  "
             f"{entry.verification}  {','.join(entry.extension_types)}  "
             f"{','.join(entry.capabilities) or '-'}"
         )
@@ -125,6 +143,7 @@ def _plugin_validate(arguments: argparse.Namespace, workspace: Workspace) -> int
         "types": list(manifest.types),
         "capabilities": [asdict(item) for item in manifest.capabilities],
         "permissions": _permissions(manifest),
+        "source_digest": plugin_tree_digest(manifest.root),
         "warnings": warnings,
     }
     if arguments.json:
@@ -134,6 +153,7 @@ def _plugin_validate(arguments: argparse.Namespace, workspace: Workspace) -> int
         print(f"Types: {', '.join(manifest.types)}")
         print(f"Capabilities: {', '.join(item.name for item in manifest.capabilities) or '-'}")
         print(f"Permissions: {json.dumps(result['permissions'], sort_keys=True)}")
+        print(f"Source digest (SHA-256): {result['source_digest']}")
         for warning in warnings:
             print(f"WARNING: {warning}")
         print("Manifest validation is not a security verdict or sandbox.")
@@ -219,6 +239,23 @@ def _plugin_update(arguments: argparse.Namespace, workspace: Workspace) -> int:
     sync_all_skill_adapters(workspace)
     build_context_index(workspace)
     print("Updated locally and disabled pending renewed execution approval: " + plan.plugins[-1].id)
+    return 0
+
+
+def _plugin_rollback(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    result = _manager(workspace, synchronize_routes=False).rollback(arguments.plugin)
+    sync_all_skill_adapters(workspace)
+    build_context_index(workspace)
+    print(
+        f"Restored {result['plugin_id']} {result['version']} and pinned it; "
+        "run `alem plugin unpin <id>` before reconciling a newer accepted release."
+    )
+    return 0
+
+
+def _plugin_unpin(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    _manager(workspace, synchronize_routes=False).unpin(arguments.plugin)
+    print(f"Removed the release pin for {arguments.plugin}; run `alem update` to reconcile.")
     return 0
 
 
@@ -352,7 +389,12 @@ def _plugin_create(arguments: argparse.Namespace, workspace: Workspace) -> int:
     (destination / "tests/test_plugin.py").write_text(STARTER_TEST, encoding="utf-8", newline="\n")
     (destination / "README.md").write_text(
         f"# {display_name}\n\nA functional Alem API v1 starter plugin.\n\n"
-        "```bash\nalem plugin validate .\npytest\n```\n",
+        "Document source revision, license and attribution, dependency pins, permissions, "
+        "credential names, telemetry, supported platforms, and readiness prerequisites.\n\n"
+        "```bash\nalem plugin validate .\npython -m pytest\n```\n\n"
+        "A candidate stays non-accepted until a maintainer merges an explicit release-registry "
+        "entry. Acceptance makes it part of normal setup/update; it does not create an OS "
+        "sandbox.\n",
         encoding="utf-8",
         newline="\n",
     )
@@ -466,7 +508,108 @@ def _capability_invoke(arguments: argparse.Namespace, workspace: Workspace) -> i
     return 0
 
 
+def _tool_list(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    values = list_tool_statuses(workspace)
+    if arguments.json:
+        _json({"tools": values})
+        return 0
+    if not values:
+        print("No accepted integrations are registered")
+        return 0
+    print("ID  AUTHORSHIP  READINESS  AVAILABLE")
+    for value in values:
+        print(
+            f"{value['id']}  {value['authorship']}  {value['readiness']}  "
+            f"{'yes' if value['available'] else 'no'}"
+        )
+        for blocker in value["blockers"]:
+            print(f"  - {blocker}")
+    return 0
+
+
+def _tool_status(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    values = list_tool_statuses(workspace, identifier=arguments.integration)
+    if arguments.json:
+        _json({"tools": values} if arguments.integration is None else {"tool": values[0]})
+    elif arguments.integration is None:
+        _tool_list(SimpleNamespace(json=False), workspace)
+    else:
+        value = values[0]
+        print(
+            f"{value['id']} ({value['plugin_id']})\n"
+            f"Acceptance: {value['acceptance']}\n"
+            f"Authorship: {value['authorship']}"
+            + (f" — {value['contributor']}" if value["contributor"] else "")
+            + f"\nRelease: {value['release_version']}\n"
+            f"Available: {'yes' if value['available'] else 'no'}\n"
+            f"Readiness: {value['readiness']}"
+        )
+        for blocker in value["blockers"]:
+            print(f"  - {blocker}")
+    return 0
+
+
+def _tool_doctor(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    values = list_tool_statuses(workspace, identifier=arguments.integration)
+    if arguments.json:
+        _json({"tools": values})
+    else:
+        for value in values:
+            print(f"{value['id']}: {value['readiness']}")
+            for check in value["checks"]:
+                print(f"  [{check['status']}] {check['name']}: {check['message']}")
+    return 1 if any(value["readiness"] != "ready" for value in values) else 0
+
+
+def _tool_configure(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    value = list_tool_statuses(
+        workspace,
+        identifier=arguments.integration,
+        check_services=False,
+    )[0]
+    missing = value["missing_configuration"]
+    if not missing:
+        print(f"{value['id']}: all required configuration is present")
+        if value["configuration_instructions"]:
+            print(value["configuration_instructions"])
+        return 0
+    print(f"{value['id']} requires these environment variable names: {', '.join(missing)}")
+    if value["configuration_instructions"]:
+        print(value["configuration_instructions"])
+    print(
+        "Set the values through your operating system's secret manager or a hidden-input "
+        "shell session. Alem does not persist or print secret values; capability invocation "
+        "forwards only variables declared by the plugin manifest. Then rerun `alem tools doctor "
+        f"{value['id']}`."
+    )
+    return 0
+
+
 def register_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    tools = commands.add_parser("tools", help="list accepted tools and check readiness")
+    tool_commands = tools.add_subparsers(dest="tools_command", required=True)
+    listing = tool_commands.add_parser("list", help="list accepted integrations and readiness")
+    listing.add_argument("--json", action="store_true")
+    listing.set_defaults(handler=_tool_list)
+
+    status = tool_commands.add_parser("status", help="show accepted integration blockers")
+    status.add_argument("integration", nargs="?")
+    status.add_argument("--json", action="store_true")
+    status.set_defaults(handler=_tool_status)
+
+    doctor = tool_commands.add_parser(
+        "doctor", help="check local and declared service prerequisites"
+    )
+    doctor.add_argument("integration", nargs="?")
+    doctor.add_argument("--json", action="store_true")
+    doctor.set_defaults(handler=_tool_doctor)
+
+    configure = tool_commands.add_parser(
+        "configure", help="show secure setup guidance for accepted tool prerequisites"
+    )
+    configure.add_argument("integration")
+    configure.set_defaults(handler=_tool_configure)
+
     plugin = commands.add_parser("plugin", help="develop and manage workspace-local plugins")
     plugin_commands = plugin.add_subparsers(dest="plugin_command", required=True)
 
@@ -526,6 +669,18 @@ def register_commands(commands: argparse._SubParsersAction[argparse.ArgumentPars
     update.add_argument("--approve", action="store_true")
     update.add_argument("--with-python-dependencies", action="store_true")
     update.set_defaults(handler=_plugin_update)
+
+    rollback = plugin_commands.add_parser(
+        "rollback", help="restore the previous managed release and pin it"
+    )
+    rollback.add_argument("plugin")
+    rollback.set_defaults(handler=_plugin_rollback)
+
+    unpin = plugin_commands.add_parser(
+        "unpin", help="allow Alem update to reconcile a newer release"
+    )
+    unpin.add_argument("plugin")
+    unpin.set_defaults(handler=_plugin_unpin)
 
     create = plugin_commands.add_parser("create", help="generate a functional API v1 starter")
     create.add_argument("name")

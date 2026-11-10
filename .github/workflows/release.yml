@@ -1,0 +1,35 @@
+name: Release Alem source
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Check release tag matches Alem version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python -c 'import os,tomllib; expected=tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]; actual=os.environ["RELEASE_TAG"].removeprefix("v"); raise SystemExit(f"tag {actual} does not match pyproject version {expected}") if actual != expected else None'
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m ruff check .
+      - run: python -m pytest
+      - run: alem integration validate
+      - name: Publish the validated source release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes

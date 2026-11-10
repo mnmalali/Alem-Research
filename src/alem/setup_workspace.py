@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import platform
 import stat
+import subprocess
 import sys
 import venv
 from datetime import UTC, datetime
@@ -13,6 +14,7 @@ from typing import Any
 from alem.adapters import sync_skill_adapters
 from alem.config import load_config
 from alem.extensions import ExtensionError, PluginCatalogue, PluginManager
+from alem.integrations import load_integrations
 from alem.workspace import Workspace
 
 
@@ -52,34 +54,53 @@ def _configured_catalogue(workspace: Workspace, config) -> Path | None:
 
 
 def _setup_plugins(workspace: Workspace, config) -> dict[str, Any]:
-    """Install trusted official plugins and report opt-in community choices."""
+    """Reconcile accepted releases, then classify catalog entries without provisioning them."""
+    from alem.reconciliation import reconcile_accepted_integrations
+
     result: dict[str, Any] = {
-        "official": {"installed": [], "enabled": [], "already_ready": []},
+        "official": {"installed": [], "updated": [], "already_current": []},
+        "community_accepted": {"installed": [], "updated": [], "already_current": []},
         "community_available": {"verified": [], "unverified": []},
+        "reconciliation": {
+            "accepted": 0,
+            "installed": [],
+            "updated": [],
+            "already_current": [],
+            "pinned": [],
+            "unsupported": [],
+            "failed": [],
+            "candidates_untouched": 0,
+        },
     }
     catalogue_path = _configured_catalogue(workspace, config)
     if catalogue_path is None:
         return result
 
     catalogue = PluginCatalogue(catalogue_path)
+    registry_path = workspace.path("integrations/registry.toml")
+    records = load_integrations(workspace) if registry_path.is_file() else []
+    by_plugin = {item.plugin_id: item for item in records if item.plugin_id}
+    accepted_ids = {
+        item.plugin_id for item in records if item.acceptance == "accepted" and item.plugin_id
+    }
     for entry in catalogue.search():
-        if entry.channel == "community":
+        if entry.channel == "community" and entry.id not in accepted_ids:
             result["community_available"][entry.verification].append(entry.id)
-
-    manager = PluginManager(workspace.root, catalogue=catalogue_path)
-    installed = {item.id: item for item in manager.list_installed()}
-    for entry in catalogue.search():
-        if entry.channel != "official":
-            continue
-        if entry.id not in installed:
-            manager.install(entry.id, approved=True)
-            result["official"]["installed"].append(entry.id)
-            installed = {item.id: item for item in manager.list_installed()}
-        if not installed[entry.id].enabled:
-            manager.enable(entry.id, approve_execution=True)
-            result["official"]["enabled"].append(entry.id)
-        else:
-            result["official"]["already_ready"].append(entry.id)
+    reconciliation = reconcile_accepted_integrations(workspace) if registry_path.is_file() else None
+    if reconciliation is not None:
+        result["reconciliation"] = reconciliation
+        for category, ids in (
+            ("installed", reconciliation["installed"]),
+            ("updated", reconciliation["updated"]),
+            ("already_current", reconciliation["already_current"]),
+            ("pinned", reconciliation["pinned"]),
+        ):
+            for plugin_id in ids:
+                record = by_plugin.get(plugin_id)
+                if record is None:
+                    continue
+                group = "official" if record.authorship == "alem-official" else "community_accepted"
+                result[group][category].append(plugin_id)
     return result
 
 
@@ -105,6 +126,17 @@ def initialize_workspace(
     if create_venv and not local_venv.exists():
         venv.EnvBuilder(with_pip=True, clear=False, symlinks=False).create(local_venv)
         venv_created = True
+        bootstrap = workspace.path("scripts/bootstrap_runtime.py")
+        completed = subprocess.run(
+            [sys.executable, str(bootstrap), str(workspace.root)],
+            cwd=workspace.root,
+            check=False,
+        )
+        if completed.returncode:
+            raise RuntimeError(
+                "Alem dependencies could not be installed into .alem/venv; "
+                "see the pip output above"
+            )
     record = {
         "workspace_version": config.workspace_version,
         "initialized_at": datetime.now(UTC).isoformat(),
@@ -120,6 +152,7 @@ def initialize_workspace(
             "index_digest": context_index["digest"],
         },
         "local_venv_created": venv_created,
+        "local_venv_ready": bool(local_python(workspace)),
         "scope_guarantee": "All recorded paths resolve inside the workspace root.",
     }
     workspace.write_json(".alem/state/workspace.json", record)

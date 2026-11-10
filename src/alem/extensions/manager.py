@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -9,7 +10,7 @@ import shutil
 import stat
 import subprocess
 import sys
-import tempfile
+import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -115,6 +116,11 @@ def _tree_digest(root: Path) -> str:
     return digest.hexdigest()
 
 
+def plugin_tree_digest(root: str | os.PathLike[str]) -> str:
+    """Return the deterministic SHA-256 digest used by release pinning and install state."""
+    return _tree_digest(Path(root).resolve())
+
+
 def _copy_plugin(source: Path, destination: Path) -> None:
     ignored = shutil.ignore_patterns(".git", ".venv", "venv", "__pycache__", "*.pyc", "*.pyo")
     # Digest first so symlinks are rejected instead of followed by copytree.
@@ -149,12 +155,13 @@ def _install_pinned_dependencies(
 ) -> None:
     """Install reviewed exact pins into a staged workspace-local directory."""
     target.mkdir(parents=True)
-    pip_home = sandbox / "home"
-    pip_cache = sandbox / "cache"
-    pip_os_temp = sandbox / "temp"
+    pip_token = uuid.uuid4().hex
+    pip_home = sandbox / f"plugin-pip-home-{plugin_id}-{pip_token}"
+    pip_cache = sandbox / f"plugin-pip-cache-{plugin_id}-{pip_token}"
+    pip_os_temp = sandbox / f"plugin-pip-temp-{plugin_id}-{pip_token}"
     for directory in (pip_home, pip_cache, pip_os_temp):
         directory.mkdir(parents=True)
-    pip_config = sandbox / "pip-config.ini"
+    pip_config = sandbox / f"plugin-pip-{plugin_id}-{pip_token}.ini"
     pip_config.write_text("[global]\ndisable-pip-version-check = true\n", encoding="utf-8")
     pip_environment = {
         key: os.environ[key] for key in ("SYSTEMROOT", "WINDIR", "PATH") if key in os.environ
@@ -407,6 +414,9 @@ class PluginManager:
         *,
         approved: bool = False,
         install_python_dependencies: bool = False,
+        release_metadata: Mapping[str, str] | None = None,
+        enable_after_install: bool = False,
+        immutable_release: bool = False,
     ) -> InstallPlan:
         plan = self.plan_install(source)
         root_plugin = plan.plugins[-1]
@@ -418,6 +428,14 @@ class PluginManager:
                     f"{manifest.id} declares Python dependencies; explicitly enable "
                     "workspace-local dependency installation"
                 )
+        if immutable_release:
+            return self._install_immutable_release(
+                source,
+                plan,
+                install_python_dependencies=install_python_dependencies,
+                release_metadata=release_metadata,
+                enable_after_install=enable_after_install,
+            )
         self.plugins_dir.mkdir(parents=True, exist_ok=True)
         state = self._load_state()
         source_root, source_label = self._resolve_source(source)
@@ -431,87 +449,250 @@ class PluginManager:
             target = self.plugins_dir / manifest.id
             dependency_target = self.dependencies_dir / manifest.id
             self.dependencies_dir.mkdir(parents=True, exist_ok=True)
-            with tempfile.TemporaryDirectory(prefix="install-", dir=self.alem_dir) as temp_text:
-                transaction = Path(temp_text)
-                staged_plugin = transaction / "new-plugin"
-                staged_dependencies = transaction / "new-dependencies"
-                old_plugin = transaction / "old-plugin"
-                old_dependencies = transaction / "old-dependencies"
-                _copy_plugin(plugin_source, staged_plugin)
-                staged_manifest = load_manifest(staged_plugin)
-                if staged_manifest.id != manifest.id or staged_manifest.version != manifest.version:
-                    raise PluginIntegrityError("plugin changed while it was being installed")
-                plugin_digest = _tree_digest(staged_plugin)
-                dependency_path: str | None = None
-                dependency_digest: str | None = None
-                dependency_lock: list[str] = []
+            transaction_id = uuid.uuid4().hex
+            staged_plugin = self.plugins_dir / f".stage-{manifest.id}-{transaction_id}"
+            staged_dependencies = self.dependencies_dir / f".stage-{manifest.id}-{transaction_id}"
+            backup_plugin = self.plugins_dir / f".backup-{manifest.id}-{transaction_id}"
+            backup_dependencies = self.dependencies_dir / f".backup-{manifest.id}-{transaction_id}"
+            failed_plugin = self.plugins_dir / f".failed-{manifest.id}-{transaction_id}"
+            failed_dependencies = self.dependencies_dir / f".failed-{manifest.id}-{transaction_id}"
+            _copy_plugin(plugin_source, staged_plugin)
+            staged_manifest = load_manifest(staged_plugin)
+            if staged_manifest.id != manifest.id or staged_manifest.version != manifest.version:
+                raise PluginIntegrityError("plugin changed while it was being installed")
+            plugin_digest = _tree_digest(staged_plugin)
+            dependency_path: str | None = None
+            dependency_digest: str | None = None
+            dependency_lock: list[str] = []
+            if manifest.python_dependencies:
+                _install_pinned_dependencies(
+                    manifest.python_dependencies,
+                    staged_dependencies,
+                    workspace=self.workspace,
+                    sandbox=self.alem_dir,
+                    plugin_id=manifest.id,
+                )
+                dependency_digest = _tree_digest(staged_dependencies)
+                dependency_lock = _dependency_lock(staged_dependencies)
+                dependency_path = dependency_target.relative_to(self.workspace).as_posix()
+
+            previous_record = copy.deepcopy(state["plugins"].get(manifest.id))
+            moved_plugin = False
+            moved_dependencies = False
+            installed_plugin = False
+            installed_dependencies = False
+            try:
+                if target.exists():
+                    os.replace(target, backup_plugin)
+                    moved_plugin = True
+                if dependency_target.exists():
+                    os.replace(dependency_target, backup_dependencies)
+                    moved_dependencies = True
+                os.replace(staged_plugin, target)
+                installed_plugin = True
                 if manifest.python_dependencies:
+                    os.replace(staged_dependencies, dependency_target)
+                    installed_dependencies = True
+                plugin_record = {
+                    "name": manifest.name,
+                    "version": manifest.version,
+                    "path": target.relative_to(self.workspace).as_posix(),
+                    "source": label,
+                    "digest": plugin_digest,
+                    "enabled": False,
+                    "installation_approved_at": _utc_now(),
+                    "execution_approved_digest": None,
+                    "execution_approved_at": None,
+                    "dependency_path": dependency_path,
+                    "dependency_digest": dependency_digest,
+                    "dependency_lock": dependency_lock,
+                    "plugin_dependencies": [
+                        {
+                            "id": item.id,
+                            "version": item.version,
+                            "optional": item.optional,
+                        }
+                        for item in manifest.plugin_dependencies
+                    ],
+                }
+                if moved_plugin and previous_record is not None:
+                    previous_record["path"] = backup_plugin.relative_to(self.workspace).as_posix()
+                    if moved_dependencies:
+                        previous_record["dependency_path"] = (
+                            backup_dependencies.relative_to(self.workspace).as_posix()
+                        )
+                    plugin_record["previous_release"] = previous_record
+                if manifest.id == root_plugin.id and release_metadata:
+                    plugin_record.update(release_metadata)
+                state["plugins"][manifest.id] = plugin_record
+                self._save_state(state)
+                if enable_after_install:
+                    self.enable(manifest.id, approve_execution=True)
+            except Exception:
+                if installed_plugin and target.exists():
+                    os.replace(target, failed_plugin)
+                if installed_dependencies and dependency_target.exists():
+                    os.replace(dependency_target, failed_dependencies)
+                if moved_plugin:
+                    os.replace(backup_plugin, target)
+                if moved_dependencies:
+                    os.replace(backup_dependencies, dependency_target)
+                if previous_record is None:
+                    state["plugins"].pop(manifest.id, None)
+                else:
+                    state["plugins"][manifest.id] = previous_record
+                self._save_state(state)
+                raise
+        return plan
+
+    def _install_immutable_release(
+        self,
+        source: str | os.PathLike[str],
+        plan: InstallPlan,
+        *,
+        install_python_dependencies: bool,
+        release_metadata: Mapping[str, str] | None,
+        enable_after_install: bool,
+    ) -> InstallPlan:
+        """Install release trees at content-addressed paths; never replace the working tree."""
+        root_plugin = plan.plugins[-1]
+        root_source, root_label = self._resolve_source(source)
+        sources: dict[str, tuple[Path, str]] = {root_plugin.id: (root_source, root_label)}
+        if self.catalogue:
+            for manifest in plan.plugins[:-1]:
+                entry = self.catalogue.get(manifest.id)
+                sources[manifest.id] = (self.catalogue.resolve_source(entry), entry.id)
+
+        self.plugins_dir.mkdir(parents=True, exist_ok=True)
+        self.dependencies_dir.mkdir(parents=True, exist_ok=True)
+        state = self._load_state()
+        dependency_constraints: dict[str, list[str]] = {}
+        for parent in plan.plugins:
+            for dependency in parent.plugin_dependencies:
+                dependency_constraints.setdefault(dependency.id, []).append(dependency.version)
+        for manifest in plan.plugins:
+            if manifest.id != root_plugin.id and manifest.id not in state["plugins"]:
+                raise DependencyError(
+                    f"accepted release dependency {manifest.id} must be reconciled separately"
+                )
+            if manifest.id != root_plugin.id:
+                previous_dependency = state["plugins"][manifest.id]
+                try:
+                    installed_dependency = self._installed_manifest(
+                        manifest.id, previous_dependency
+                    )
+                    installed_token = self._verify_digest(
+                        installed_dependency, previous_dependency
+                    )
+                except ExtensionError as exc:
+                    raise DependencyError(
+                        f"accepted dependency {manifest.id} is not intact; reconcile it first"
+                    ) from exc
+                if (
+                    previous_dependency.get("acceptance") != "accepted"
+                    or not previous_dependency.get("enabled")
+                    or previous_dependency.get("execution_approved_digest") != installed_token
+                    or not all(
+                        satisfies(installed_dependency.version, constraint)
+                        for constraint in dependency_constraints.get(manifest.id, [])
+                    )
+                ):
+                    raise DependencyError(
+                        f"accepted dependency {manifest.id} must be reconciled separately"
+                    )
+                continue
+            plugin_source, label = sources[manifest.id]
+            source_digest = _tree_digest(plugin_source)
+            target_name = f"{manifest.id}--v{manifest.version}--{source_digest[:16]}"
+            target = self.plugins_dir / target_name
+            if target.exists() and _tree_digest(target) != source_digest:
+                target = self.plugins_dir / f"{target_name}--{uuid.uuid4().hex[:8]}"
+            if not target.exists():
+                _copy_plugin(plugin_source, target)
+            installed_manifest = load_manifest(target)
+            plugin_digest = _tree_digest(target)
+            if (
+                installed_manifest.id != manifest.id
+                or installed_manifest.version != manifest.version
+                or plugin_digest != source_digest
+            ):
+                raise PluginIntegrityError(
+                    f"content-addressed release verification failed for {manifest.id}"
+                )
+
+            dependency_path: str | None = None
+            dependency_digest: str | None = None
+            dependency_lock: list[str] = []
+            if manifest.python_dependencies:
+                dependency_name = f"{manifest.id}--v{manifest.version}--{source_digest[:16]}"
+                dependency_target = self.dependencies_dir / dependency_name
+                recorded_dependency = (
+                    state["plugins"].get(manifest.id, {}).get("dependency_digest")
+                    if isinstance(state["plugins"].get(manifest.id), dict)
+                    else None
+                )
+                if dependency_target.exists():
+                    try:
+                        existing_dependency_digest = _tree_digest(dependency_target)
+                    except ExtensionError:
+                        existing_dependency_digest = None
+                    if (
+                        not recorded_dependency
+                        or existing_dependency_digest != recorded_dependency
+                    ):
+                        dependency_target = self.dependencies_dir / (
+                            dependency_name + "--" + uuid.uuid4().hex[:8]
+                        )
+                if not dependency_target.exists():
                     _install_pinned_dependencies(
                         manifest.python_dependencies,
-                        staged_dependencies,
+                        dependency_target,
                         workspace=self.workspace,
-                        sandbox=transaction / "pip-sandbox",
+                        sandbox=self.alem_dir,
                         plugin_id=manifest.id,
                     )
-                    dependency_digest = _tree_digest(staged_dependencies)
-                    dependency_lock = _dependency_lock(staged_dependencies)
-                    dependency_path = dependency_target.relative_to(self.workspace).as_posix()
+                dependency_digest = _tree_digest(dependency_target)
+                dependency_lock = _dependency_lock(dependency_target)
+                dependency_path = dependency_target.relative_to(self.workspace).as_posix()
 
-                previous_record = state["plugins"].get(manifest.id)
-                moved_plugin = False
-                moved_dependencies = False
-                installed_plugin = False
-                installed_dependencies = False
+            previous = copy.deepcopy(state["plugins"].get(manifest.id))
+            plugin_record: dict[str, Any] = {
+                "name": manifest.name,
+                "version": manifest.version,
+                "path": target.relative_to(self.workspace).as_posix(),
+                "source": label,
+                "digest": plugin_digest,
+                "enabled": False,
+                "installation_approved_at": _utc_now(),
+                "execution_approved_digest": None,
+                "execution_approved_at": None,
+                "dependency_path": dependency_path,
+                "dependency_digest": dependency_digest,
+                "dependency_lock": dependency_lock,
+                "plugin_dependencies": [
+                    {"id": item.id, "version": item.version, "optional": item.optional}
+                    for item in manifest.plugin_dependencies
+                ],
+            }
+            if previous:
+                current_path = target.relative_to(self.workspace).as_posix()
+                if previous.get("path") != current_path:
+                    plugin_record["previous_release"] = previous
+                elif isinstance(previous.get("previous_release"), dict):
+                    plugin_record["previous_release"] = previous["previous_release"]
+            if manifest.id == root_plugin.id and release_metadata:
+                plugin_record.update(release_metadata)
+            state["plugins"][manifest.id] = plugin_record
+            self._save_state(state)
+            if enable_after_install:
                 try:
-                    if target.exists():
-                        os.replace(target, old_plugin)
-                        moved_plugin = True
-                    if dependency_target.exists():
-                        os.replace(dependency_target, old_dependencies)
-                        moved_dependencies = True
-                    os.replace(staged_plugin, target)
-                    installed_plugin = True
-                    if manifest.python_dependencies:
-                        os.replace(staged_dependencies, dependency_target)
-                        installed_dependencies = True
-                    state["plugins"][manifest.id] = {
-                        "name": manifest.name,
-                        "version": manifest.version,
-                        "path": target.relative_to(self.workspace).as_posix(),
-                        "source": label,
-                        "digest": plugin_digest,
-                        "enabled": False,
-                        "installation_approved_at": _utc_now(),
-                        "execution_approved_digest": None,
-                        "execution_approved_at": None,
-                        "dependency_path": dependency_path,
-                        "dependency_digest": dependency_digest,
-                        "dependency_lock": dependency_lock,
-                        "plugin_dependencies": [
-                            {
-                                "id": item.id,
-                                "version": item.version,
-                                "optional": item.optional,
-                            }
-                            for item in manifest.plugin_dependencies
-                        ],
-                    }
-                    # Save each dependency-first step. If a later plugin fails,
-                    # installed dependencies remain recorded and disabled.
-                    self._save_state(state)
+                    self.enable(manifest.id, approve_execution=True)
                 except Exception:
-                    if installed_plugin and target.exists():
-                        shutil.rmtree(target)
-                    if installed_dependencies and dependency_target.exists():
-                        shutil.rmtree(dependency_target)
-                    if moved_plugin:
-                        os.replace(old_plugin, target)
-                    if moved_dependencies:
-                        os.replace(old_dependencies, dependency_target)
-                    if previous_record is None:
+                    if previous is None:
                         state["plugins"].pop(manifest.id, None)
                     else:
-                        state["plugins"][manifest.id] = previous_record
+                        state["plugins"][manifest.id] = previous
+                    self._save_state(state)
                     raise
         return plan
 
@@ -644,6 +825,107 @@ class PluginManager:
         )
         return plan
 
+    def rollback(self, plugin_id: str) -> dict[str, Any]:
+        """Restore the immediately previous managed release and pin it against reconciliation."""
+        state, record = self._record(plugin_id)
+        previous = record.get("previous_release")
+        if not isinstance(previous, dict):
+            raise PluginNotFoundError(f"no managed rollback release is recorded for {plugin_id}")
+        current_manifest = self._installed_manifest(plugin_id, record)
+        previous_manifest = self._installed_manifest(plugin_id, previous)
+        self._verify_digest(current_manifest, record)
+        previous_token = self._verify_digest(previous_manifest, previous)
+        previous_approval = previous.get("execution_approved_digest")
+        if previous_approval and previous_approval != previous_token:
+            raise PluginIntegrityError(f"previous release approval is invalid for {plugin_id}")
+
+        active_plugin = (self.workspace / str(record["path"])).resolve()
+        previous_plugin = (self.workspace / str(previous["path"])).resolve()
+        active_plugin.relative_to(self.plugins_dir.resolve())
+        previous_plugin.relative_to(self.plugins_dir.resolve())
+        token = uuid.uuid4().hex
+        forward_plugin = self.plugins_dir / f".backup-{plugin_id}-rollback-{token}"
+
+        current_dependency_text = record.get("dependency_path")
+        previous_dependency_text = previous.get("dependency_path")
+        active_dependency = (
+            (self.workspace / current_dependency_text).resolve()
+            if isinstance(current_dependency_text, str)
+            else None
+        )
+        previous_dependency = (
+            (self.workspace / previous_dependency_text).resolve()
+            if isinstance(previous_dependency_text, str)
+            else None
+        )
+        if active_dependency is not None:
+            active_dependency.relative_to(self.dependencies_dir.resolve())
+        if previous_dependency is not None:
+            previous_dependency.relative_to(self.dependencies_dir.resolve())
+        forward_dependency = self.dependencies_dir / f".backup-{plugin_id}-rollback-{token}"
+
+        moved_current_plugin = False
+        moved_previous_plugin = False
+        moved_current_dependency = False
+        moved_previous_dependency = False
+        try:
+            os.replace(active_plugin, forward_plugin)
+            moved_current_plugin = True
+            os.replace(previous_plugin, active_plugin)
+            moved_previous_plugin = True
+            if active_dependency is not None and active_dependency.exists():
+                os.replace(active_dependency, forward_dependency)
+                moved_current_dependency = True
+            if previous_dependency is not None and previous_dependency.exists():
+                os.replace(previous_dependency, self.dependencies_dir / plugin_id)
+                moved_previous_dependency = True
+
+            restored = copy.deepcopy(previous)
+            restored["path"] = active_plugin.relative_to(self.workspace).as_posix()
+            restored["dependency_path"] = (
+                (self.dependencies_dir / plugin_id).relative_to(self.workspace).as_posix()
+                if moved_previous_dependency
+                else None
+            )
+            prior_forward = copy.deepcopy(record)
+            prior_forward.pop("previous_release", None)
+            prior_forward.pop("pinned_release", None)
+            prior_forward["path"] = forward_plugin.relative_to(self.workspace).as_posix()
+            if moved_current_dependency:
+                prior_forward["dependency_path"] = forward_dependency.relative_to(
+                    self.workspace
+                ).as_posix()
+            restored["previous_release"] = prior_forward
+            restored["pinned_release"] = {
+                "version": restored.get("version"),
+                "digest": restored.get("digest"),
+                "release_digest": restored.get("release_digest"),
+            }
+            state["plugins"][plugin_id] = restored
+            self._save_state(state)
+            return {
+                "plugin_id": plugin_id,
+                "version": restored.get("version"),
+                "digest": restored.get("release_digest", restored.get("digest")),
+                "pinned": True,
+            }
+        except Exception:
+            if moved_previous_dependency:
+                os.replace(self.dependencies_dir / plugin_id, previous_dependency)
+            if moved_current_dependency:
+                os.replace(forward_dependency, active_dependency)
+            if moved_previous_plugin:
+                os.replace(active_plugin, previous_plugin)
+            if moved_current_plugin:
+                os.replace(forward_plugin, active_plugin)
+            raise
+
+    def unpin(self, plugin_id: str) -> None:
+        state, record = self._record(plugin_id)
+        if not record.pop("pinned_release", None):
+            raise PluginNotFoundError(f"no release pin is recorded for {plugin_id}")
+        self._save_state(state)
+
     def set_route(self, capability: str, *, default: str, fallbacks: Sequence[str] = ()) -> None:
         if default in fallbacks or len(set(fallbacks)) != len(fallbacks):
             raise RoutingError("default and fallback provider IDs must be unique")
@@ -725,10 +1007,121 @@ class PluginManager:
         if contract is not None:
             contract.validate_input(payload)
         state = self._load_state()
-        candidates = self.registry(enabled_only=True).resolve(
-            capability, provider, capability_version=capability_version
-        )
-        failures: list[dict[str, str]] = []
+        readiness_by_plugin: dict[str, dict[str, Any]] = {}
+        try:
+            from alem.tool_status import list_tool_statuses
+            from alem.workspace import Workspace
+
+            readiness_by_plugin = {
+                item["plugin_id"]: item
+                for item in list_tool_statuses(
+                    Workspace(self.workspace), check_services=False
+                )
+                if item.get("plugin_id")
+            }
+        except Exception:
+            # Manually managed development workspaces may not have a release registry.
+            readiness_by_plugin = {}
+        try:
+            candidates = self.registry(enabled_only=True).resolve(
+                capability, provider, capability_version=capability_version
+            )
+        except RoutingError as exc:
+            blocked = [
+                item
+                for item in readiness_by_plugin.values()
+                if capability in item.get("capabilities", [])
+            ]
+            detail = "; ".join(
+                f"{item['plugin_id']}: {item['readiness']}"
+                + (f" ({'; '.join(item['blockers'])})" if item["blockers"] else "")
+                for item in blocked
+            )
+            if detail:
+                raise RoutingError(
+                    f"no ready provider for {capability!r}; accepted providers: {detail}. "
+                    "Run `alem tools status` for diagnostics."
+                ) from exc
+            raise
+        supplied = dict(credentials or {})
+        ready_candidates = []
+        failures: list[dict[str, Any]] = []
+        for candidate in candidates:
+            record = state["plugins"][candidate.plugin_id]
+            tool = readiness_by_plugin.get(candidate.plugin_id)
+            if tool and tool.get("readiness") in {
+                "unsupported-platform",
+                "missing-hardware",
+                "missing-runtime",
+                "error",
+            }:
+                failures.append(
+                    {
+                        "provider": candidate.plugin_id,
+                        "reason": tool["readiness"],
+                    }
+                )
+                continue
+            try:
+                manifest = self._installed_manifest(candidate.plugin_id, record)
+                digest = self._verify_digest(manifest, record)
+                if record.get("execution_approved_digest") != digest:
+                    failures.append(
+                        {
+                            "provider": candidate.plugin_id,
+                            "reason": "execution_approval_missing",
+                        }
+                    )
+                    continue
+                missing = [
+                    name for name in manifest.required_credentials if not supplied.get(name)
+                ]
+                if missing:
+                    failures.append(
+                        {
+                            "provider": candidate.plugin_id,
+                            "reason": "needs_configuration",
+                            "configuration": missing,
+                        }
+                    )
+                    continue
+                ready_candidates.append(candidate)
+            except (ExtensionError, OSError, ValueError) as exc:
+                failures.append(
+                    {
+                        "provider": candidate.plugin_id,
+                        "reason": type(exc).__name__,
+                    }
+                )
+        if provider is not None and not ready_candidates:
+            summary = "; ".join(
+                f"{item['provider']}: {item['reason']}"
+                + (
+                    " (" + ", ".join(item["configuration"]) + ")"
+                    if item.get("configuration")
+                    else ""
+                )
+                for item in failures
+            )
+            raise RoutingError(
+                f"provider {provider!r} is blocked for {capability!r}: {summary}; "
+                "run `alem tools status` or `alem tools configure <id>`"
+            )
+        if not ready_candidates:
+            summary = "; ".join(
+                f"{item['provider']}: {item['reason']}"
+                + (
+                    " (" + ", ".join(item["configuration"]) + ")"
+                    if item.get("configuration")
+                    else ""
+                )
+                for item in failures
+            )
+            raise RoutingError(
+                f"no ready provider for {capability!r}; blocked: {summary}. "
+                "Run `alem tools status` or `alem tools configure <id>`."
+            )
+        candidates = ready_candidates
         for candidate in candidates:
             record = state["plugins"][candidate.plugin_id]
             try:
@@ -736,7 +1129,6 @@ class PluginManager:
                 digest = self._verify_digest(manifest, record)
                 if record.get("execution_approved_digest") != digest:
                     raise ApprovalRequired("execution", candidate.plugin_id)
-                supplied = dict(credentials or {})
                 missing = [name for name in manifest.required_credentials if not supplied.get(name)]
                 if missing:
                     raise PluginExecutionError(
@@ -790,10 +1182,17 @@ class PluginManager:
             except (ApprovalRequired, PluginExecutionError, PluginIntegrityError) as exc:
                 # Preserve routing evidence without exposing plugin tracebacks,
                 # exception text, request data, or credential values.
-                failures.append({"provider": candidate.plugin_id, "error_type": type(exc).__name__})
+                failures.append(
+                    {
+                        "provider": candidate.plugin_id,
+                        "reason": "provider_execution_failed",
+                        "error_type": type(exc).__name__,
+                    }
+                )
                 if provider is not None:
                     raise
         summary = "; ".join(
-            f"{failure['provider']}: {failure['error_type']}" for failure in failures
+            f"{failure['provider']}: {failure.get('reason', failure.get('error_type', 'blocked'))}"
+            for failure in failures
         )
         raise RoutingError(f"all providers failed for {capability!r}: {summary}")

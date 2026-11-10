@@ -206,7 +206,7 @@ notes = "Discovery record only."
     assert records[0].trust == "unverified"
     assert validation == {
         "valid": True,
-        "schema_version": 2,
+        "schema_version": 3,
         "integrations": 1,
         "errors": [],
     }

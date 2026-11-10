@@ -13,7 +13,8 @@ On Windows PowerShell:
 git clone https://github.com/mnmalali/Alem-Research.git
 Set-Location Alem-Research
 .\alem.ps1 setup --create-venv
-.\alem.ps1 health
+.\alem.ps1 health --strict
+.\alem.ps1 --help
 ```
 
 On macOS or Linux:
@@ -22,14 +23,15 @@ On macOS or Linux:
 git clone https://github.com/mnmalali/Alem-Research.git
 cd Alem-Research
 sh ./alem setup --create-venv
-./alem health
+./alem health --strict
+./alem --help
 ```
 
 The setup command creates only ignored paths under `.alem/`, plus regenerable skill adapters under
-the repository's `.agents/` and `.claude/` directories. It automatically installs and enables
-Alem's official plugins. Community plugins are listed and classified during setup but remain
-opt-in; the agent should tell you they are available and ask before installing them. Setup does
-not edit user-level agent settings.
+the repository's `.agents/` and `.claude/` directories. It installs core dependencies into the
+workspace-local `.alem/venv` when requested, then automatically provisions every accepted
+integration supported by the platform, whether Alem-authored or community-contributed. Candidate
+integrations are listed but never installed. Setup does not edit user-level agent settings.
 
 Setup defaults to lazy context mode. Only the `alem-router` adapter is exposed at startup; all
 other installed skills and capabilities remain available through the local context index.
@@ -59,18 +61,33 @@ Start the durable lifecycle when the project inputs are ready:
 
 ## Add academic-search providers
 
-Official academic-search providers are installed during setup. To inspect them manually:
+Accepted academic-search providers are installed during setup. To inspect their acceptance and
+readiness state:
 
 ```bash
-./alem plugin search academic
-./alem plugin validate plugins/official/openalex
+./alem tools list
+./alem tools status org.alem.openalex
+./alem tools doctor
 ```
 
-Community plugins are not installed automatically. Review their verification status with
-`./alem plugin search`, then install only the ones you choose. The configured official route
-uses OpenAlex as default and Semantic Scholar as fallback.
-The exact plugin commands and failure behavior are documented in
-[`plugin-development.md`](plugin-development.md).
+`alem update` reconciles newly accepted integration releases and records failures without removing
+working releases. It does not update the Alem core package or Git checkout; use the package or
+repository release process for that. API keys and other prerequisites are configured by the user
+in their secure environment. Alem reports the required variable names and never stores or prints
+secret values. The configured academic-search route uses OpenAlex as default and Semantic Scholar
+as fallback when they are ready.
+
+On Windows PowerShell, a clean first run is:
+
+```powershell
+git clone https://github.com/mnmalali/Alem-Research.git
+Set-Location Alem-Research
+.\alem.ps1 setup --create-venv
+.\alem.ps1 health --strict
+.\alem.ps1 --help
+.\alem.ps1 tools list
+.\alem.ps1 update
+```
 
 ## Keep research evidence
 

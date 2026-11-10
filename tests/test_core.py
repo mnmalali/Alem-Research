@@ -13,6 +13,7 @@ from alem.adapters import (
 from alem.config import load_config
 from alem.errors import AlemError, ConfigurationError, UnsafePathError
 from alem.health import run_health_checks
+from alem.integrations import load_integrations
 from alem.knowledge import END, START, scan_knowledge, update_index
 from alem.projects import create_project, export_project, slugify
 from alem.setup_workspace import initialize_workspace
@@ -145,7 +146,7 @@ class WorkspaceAndConfigTests(unittest.TestCase):
 
 
 class SetupAdapterAndHealthTests(unittest.TestCase):
-    def test_setup_installs_official_plugins_and_reports_opt_in_community_plugins(self) -> None:
+    def test_setup_does_not_promote_legacy_or_catalogue_entries_to_accepted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             workspace = make_workspace(Path(temporary) / "workspace")
             official = workspace.path("plugins/official/test-official")
@@ -238,15 +239,21 @@ capabilities = []
             )
 
             result = initialize_workspace(workspace)
-            self.assertEqual(result["plugins"]["official"]["installed"], ["org.test.official"])
-            self.assertEqual(result["plugins"]["official"]["enabled"], ["org.test.official"])
+            self.assertEqual(result["plugins"]["official"]["installed"], [])
             self.assertEqual(
                 result["plugins"]["community_available"],
                 {"verified": [], "unverified": ["dev.test.community"]},
             )
-            state = workspace.read_json(".alem/state/plugins.json")
-            self.assertTrue(state["plugins"]["org.test.official"]["enabled"])
-            self.assertNotIn("dev.test.community", state["plugins"])
+            state = workspace.read_json(".alem/state/plugins.json", default={})
+            self.assertEqual(state.get("plugins", {}), {})
+            self.assertEqual(
+                result["plugins"]["reconciliation"]["candidates_untouched"], 2
+            )
+            self.assertEqual(
+                [item.acceptance for item in load_integrations(workspace)],
+                ["candidate", "candidate"],
+            )
+            self.assertNotIn("dev.test.community", state.get("plugins", {}))
 
     def test_setup_records_only_workspace_local_paths_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

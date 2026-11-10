@@ -22,8 +22,21 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
+      - name: Clean launcher bootstrap smoke (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\alem.ps1 setup --create-venv
+          .\alem.ps1 health --strict
+          .\alem.ps1 --help
+      - name: Clean launcher bootstrap smoke (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          sh ./alem setup --create-venv
+          ./alem health --strict
+          ./alem --help
       - run: python -m pip install -e ".[dev]"
       - run: python -m ruff check .
       - run: python -m pytest
-      - run: alem setup
-      - run: alem health --strict
+      - run: alem integration validate

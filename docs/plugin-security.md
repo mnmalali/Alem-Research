@@ -2,14 +2,17 @@
 
 Third-party plugins are arbitrary code. Alem 1.0 does **not** claim that a TOML
 manifest, Python protocol, subprocess, or permission declaration isolates
-that code.
+that code. Maintainer acceptance is the trust decision that allows a release to be
+provisioned and executed automatically through Alem's standard setup/update
+path. Community authorship is an attribution field and does not change that policy.
 
 ## What Alem enforces
 
-- Installation is rejected until the user gives explicit installation
-  approval after inspecting the manifest and dependency plan.
-- Execution requires a second explicit approval. Merely installing or enabling
-  a plugin is not execution approval.
+- For local/manual plugins, installation and execution require separate user
+  approvals after review.
+- An accepted release has passed maintainer review; setup records installation
+  and execution approval for the exact pinned release. A modified digest
+  invalidates that approval.
 - The installed tree is hashed. Any file change invalidates the execution
   approval and prevents that provider from running until it is reviewed and
   reinstalled/updated.
@@ -42,8 +45,10 @@ native interfaces. The manifest's `network`, filesystem, `subprocess`, and
 no portable enforcement mechanism. `python -I` isolates Python configuration,
 not the operating system.
 
-Do not run an untrusted plugin merely because `alem plugin validate` passes.
-Validation proves schema and compatibility, not intent, provenance, or safety.
+Do not run an unaccepted or untrusted plugin merely because `alem plugin validate` passes.
+Validation proves schema and compatibility, not intent, provenance, or safety. Catalogue presence
+or a `verified` badge is not acceptance. Acceptance does not imply sandboxing, readiness,
+endorsement of claims, or availability of external services.
 
 ## Operator checklist
 

@@ -101,6 +101,8 @@ class ContextEntry:
     mutation: str = "read-only"
     network: bool = False
     estimated_tokens: int = 0
+    acceptance: str | None = None
+    authorship: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,6 +142,7 @@ def _source_digest(workspace: Workspace) -> str:
     for relative, patterns in (
         ("skills", ("*/SKILL.md", "*/routing.toml")),
         ("catalogue", ("*.toml",)),
+        ("integrations", ("registry.toml",)),
         (".alem/state", ("plugins.json",)),
         (".alem/plugins", ("*/plugin.toml", "*/**/SKILL.md", "*/**/routing.toml")),
     ):
@@ -202,6 +205,8 @@ def _skill_entry(
     plugin_id: str | None = None,
     state: str = "enabled",
     trust: str = "official",
+    acceptance: str | None = None,
+    authorship: str | None = None,
 ) -> ContextEntry:
     name, description = _skill_header(path)
     route = _routing_sidecar(path)
@@ -229,6 +234,8 @@ def _skill_entry(
         mutation=str(route.get("mutation", "local-reversible")),
         network=bool(route.get("network", False)),
         estimated_tokens=estimated,
+        acceptance=acceptance,
+        authorship=authorship,
     )
 
 
@@ -244,6 +251,7 @@ def collect_context_entries(workspace: Workspace) -> list[ContextEntry]:
     """Collect compact metadata without importing or executing plugin code."""
 
     from alem.extensions import PluginCatalogue, PluginManager
+    from alem.integrations import load_integrations
 
     config = load_config(workspace)
     entries: list[ContextEntry] = []
@@ -255,21 +263,34 @@ def collect_context_entries(workspace: Workspace) -> list[ContextEntry]:
     manager = PluginManager(workspace.root, catalogue=catalogue_path)
     installed = {item.id: item for item in manager.list_installed()}
     trust_by_id: dict[str, str] = {}
+    registry_path = workspace.path("integrations/registry.toml")
+    integrations = load_integrations(workspace) if registry_path.is_file() else []
+    releases_by_plugin = {
+        item.plugin_id: item for item in integrations if item.plugin_id
+    }
     catalogue = PluginCatalogue(catalogue_path) if catalogue_path else None
     if catalogue:
         for item in catalogue.search():
             trust_by_id[item.id] = item.verification
             if item.id not in installed:
+                release = releases_by_plugin.get(item.id)
+                acceptance = release.acceptance if release else "candidate"
+                availability_state = "accepted" if acceptance == "accepted" else "candidate"
                 entries.append(
                     ContextEntry(
                         id=item.id,
                         kind="integration",
-                        description=_metadata_text(item.summary),
-                        state="available",
+                        description=_metadata_text(
+                            ("Accepted release. " if acceptance == "accepted" else "Candidate. ")
+                            + item.summary
+                        ),
+                        state=availability_state,
                         trust=item.verification,
                         plugin_id=item.id,
                         providers=tuple(item.capabilities),
                         estimated_tokens=max(32, len(item.summary) // 4),
+                        acceptance=acceptance,
+                        authorship=release.authorship if release else None,
                     )
                 )
 
@@ -278,6 +299,7 @@ def collect_context_entries(workspace: Workspace) -> list[ContextEntry]:
         if record is None:
             continue
         state = "enabled" if record.enabled and record.execution_approved else "installed"
+        release = releases_by_plugin.get(asset.plugin_id)
         skill_file = asset.path / "SKILL.md" if asset.path.is_dir() else asset.path
         if skill_file.is_file():
             entries.append(
@@ -287,6 +309,8 @@ def collect_context_entries(workspace: Workspace) -> list[ContextEntry]:
                     plugin_id=asset.plugin_id,
                     state=state,
                     trust=trust_by_id.get(asset.plugin_id, "unverified"),
+                    acceptance=release.acceptance if release else "candidate",
+                    authorship=release.authorship if release else "unknown",
                 )
             )
 
@@ -332,6 +356,35 @@ def collect_context_entries(workspace: Workspace) -> list[ContextEntry]:
                 use_when=hints,
                 network=network,
                 estimated_tokens=max(48, (len(description) + len(capability)) // 4),
+                acceptance=(
+                    "accepted"
+                    if selected
+                    and all(
+                        releases_by_plugin.get(item.plugin_id)
+                        and releases_by_plugin[item.plugin_id].acceptance == "accepted"
+                        for item in selected
+                    )
+                    else "candidate"
+                ),
+                authorship=(
+                    next(
+                        iter(
+                            {
+                                releases_by_plugin[item.plugin_id].authorship
+                                for item in selected
+                                if releases_by_plugin.get(item.plugin_id)
+                            }
+                        )
+                    )
+                    if len(
+                        {
+                            releases_by_plugin[item.plugin_id].authorship
+                            for item in selected
+                            if releases_by_plugin.get(item.plugin_id)
+                        }
+                    ) == 1
+                    else "mixed"
+                ),
             )
         )
     return sorted(entries, key=lambda item: (item.kind, item.id))

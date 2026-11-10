@@ -66,23 +66,64 @@ def _cmd_setup(arguments: argparse.Namespace, workspace: Workspace) -> int:
             status = "created" if result["local_venv_created"] else "already present"
             print(f"Local Python environment: {status}")
         official = result["plugins"]["official"]
-        ready = [*official["installed"], *official["already_ready"]]
+        official_values = [
+            *official["installed"],
+            *official["updated"],
+            *official["already_current"],
+        ]
         print(
-            "Official plugins: "
-            + (", ".join(ready) if ready else "none configured")
-            + " (installed and enabled automatically)"
+            "Accepted Alem-authored integrations: "
+            + (", ".join(official_values) if official_values else "none configured")
+            + " (provisioned and enabled automatically)"
+        )
+        community_accepted = result["plugins"]["community_accepted"]
+        accepted_values = [
+            *community_accepted["installed"],
+            *community_accepted["updated"],
+            *community_accepted["already_current"],
+        ]
+        print(
+            "Accepted community-contributor integrations: "
+            + (", ".join(accepted_values) if accepted_values else "none in this release")
+            + " (same automatic policy)"
         )
         community = result["plugins"]["community_available"]
         verified = ", ".join(community["verified"]) or "none"
         unverified = ", ".join(community["unverified"]) or "none"
-        print("Community plugins are available but opt-in.")
-        print(f"  Verified community plugins: {verified}")
-        print(f"  Unverified community plugins: {unverified}")
+        print("Catalog-only community candidates (not provisioned):")
+        print(f"  Verified: {verified}")
+        print(f"  Unverified: {unverified}")
+        reconciliation = result["plugins"]["reconciliation"]
+        for item in reconciliation["unsupported"]:
+            print(f"  BLOCKED {item['plugin_id']}: {item['reason']}")
+        for item in reconciliation["failed"]:
+            print(f"  FAILED {item['id']}: {item['reason']}")
+        if arguments.create_venv:
+            print(
+                "Core dependencies were checked in .alem/venv, "
+                "the launcher's runtime interpreter."
+            )
+    return 1 if result["plugins"]["reconciliation"]["failed"] else 0
+
+
+def _cmd_update(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    from alem.reconciliation import reconcile_accepted_integrations
+
+    result = reconcile_accepted_integrations(workspace)
+    if arguments.json:
+        _print_json(result)
+    else:
         print(
-            "  Inspect with `alem plugin search`; install with "
-            "`alem plugin install <id> --approve`."
+            "Accepted integrations reconciled: "
+            f"{len(result['installed'])} installed, {len(result['updated'])} updated, "
+            f"{len(result['already_current'])} already current, {len(result['pinned'])} pinned"
         )
-    return 0
+        for item in result["unsupported"]:
+            print(f"BLOCKED {item['plugin_id']}: {item['reason']}")
+        for item in result["failed"]:
+            print(f"FAILED {item['id']}: {item['reason']}")
+        print("Alem core updates come from the installed package or repository update process.")
+    return 1 if result["failed"] else 0
 
 
 def _cmd_health(arguments: argparse.Namespace, workspace: Workspace) -> int:
@@ -205,11 +246,16 @@ def _cmd_integration_list(arguments: argparse.Namespace, workspace: Workspace) -
         "id": max(2, *(len(str(item.get("id", ""))) for item in integrations)),
         "status": max(6, *(len(str(item.get("status", ""))) for item in integrations)),
     }
-    print(f"{'ID':<{widths['id']}}  {'STATUS':<{widths['status']}}  CAPABILITY")
+    print(
+        f"{'ID':<{widths['id']}}  {'STATUS':<{widths['status']}}  "
+        "ACCEPTANCE  AUTHORSHIP  CAPABILITIES"
+    )
     for item in integrations:
         print(
             f"{item.get('id', ''):<{widths['id']}}  "
-            f"{item.get('status', ''):<{widths['status']}}  {item.get('capability', '')}"
+            f"{item.get('status', ''):<{widths['status']}}  "
+            f"{item.get('acceptance', '')}  {item.get('authorship', '')}  "
+            f"{', '.join(item.get('capabilities', []))}"
         )
     return 0
 
@@ -217,7 +263,8 @@ def _cmd_integration_list(arguments: argparse.Namespace, workspace: Workspace) -
 def _cmd_integration_show(arguments: argparse.Namespace, workspace: Workspace) -> int:
     value = find_integration(workspace, arguments.integration).to_mapping()
     _print_json(value) if arguments.json else print(
-        f"{value['id']}  {value['status']}  {value['trust']}\n"
+        f"{value['id']}  {value['status']}  {value['acceptance']}  "
+        f"{value['authorship']}\n"
         f"  {value['name']}\n  Capabilities: {', '.join(value['capabilities']) or '-'}\n"
         f"  {value['notes']}"
     )
@@ -515,11 +562,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     setup = commands.add_parser(
         "setup",
-        help="initialize runtime, install official plugins, and report opt-in community plugins",
+        help="initialize runtime and reconcile all accepted integration releases",
     )
     setup.add_argument("--create-venv", action="store_true", help="create .alem/venv")
     _add_common_json(setup)
     setup.set_defaults(handler=_cmd_setup)
+
+    update = commands.add_parser(
+        "update", help="reconcile accepted integrations from the current Alem release"
+    )
+    _add_common_json(update)
+    update.set_defaults(handler=_cmd_update)
 
     health = commands.add_parser("health", aliases=["doctor"], help="run diagnostics")
     health.add_argument("--strict", action="store_true", help="treat warnings as failures")

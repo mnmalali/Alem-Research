@@ -9,13 +9,16 @@ index under `.alem/cache/`.
 
 | State | Meaning |
 | --- | --- |
-| Available | Listed in the checked-in catalogue; not installed or trusted for execution. |
-| Installed | Code or assets are workspace-local; not necessarily enabled. |
-| Enabled | Eligible for discovery and routing after execution approval. |
+| Candidate | Discovered or submitted, but not maintainer-accepted; never automatically provisioned or executed. |
+| Accepted | Exact release is maintainer-approved in `integrations/registry.toml`; authorship is separate metadata. |
+| Available | Accepted code is provisioned, registered, enabled, and integrity-approved. Readiness may still block invocation. |
+| Readiness | One of `ready`, `needs-configuration`, `missing-hardware`, `missing-runtime`, `service-unavailable`, `unsupported-platform`, or `error`. |
 | Activated | Selected by a context plan for the current task. |
 | Invoked | Actually executed through a capability request. |
 
-Activation does not grant installation, execution, network, credential, or external-write
+Candidate, accepted, available, ready, and activated are distinct states. A community authorship
+badge only identifies the contributor; accepted official and community releases use the same
+provisioning and routing policy. Activation does not grant network, credential, or external-write
 permission.
 
 ## Commands
@@ -57,8 +60,9 @@ network = true
 estimated_tokens = 1200
 ```
 
-Capability entries are derived from installed plugin manifests and configured provider routes.
-Catalog entries can appear as inactive suggestions but are never treated as executable.
+Capability entries are derived from registered plugins and configured provider routes. Accepted
+providers with missing prerequisites remain visible with readiness diagnostics. Catalog entries
+can appear as inactive suggestions but are never treated as executable.
 
 ## Compatibility
 

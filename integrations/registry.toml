@@ -1,4 +1,4 @@
-schema_version = 2
+schema_version = 3
 
 [[integrations]]
 id = "openalex"
@@ -12,6 +12,13 @@ cost = "free-service"
 authentication = "none; optional polite-pool email"
 privacy = "Search queries and request metadata are sent to api.openalex.org."
 notes = "Bundled provider with offline normalization tests and a recorded live smoke test."
+acceptance = "accepted"
+authorship = "alem-official"
+contributor = "Alem Research maintainers"
+release_version = "0.1.0"
+release_digest = "683584c24198eb11824b425807dbb90ffab8593b078dc65127e97420a45b056f"
+service_checks = ["https://api.openalex.org/works?per-page=1"]
+configuration_instructions = "OPENALEX_MAILTO is optional and only identifies polite-pool requests."
 
 [[integrations]]
 id = "semantic-scholar"
@@ -25,6 +32,13 @@ cost = "free-service"
 authentication = "optional API key"
 privacy = "Search queries and request metadata are sent to api.semanticscholar.org."
 notes = "Bundled fallback provider; live unauthenticated use remains subject to rate limiting."
+acceptance = "accepted"
+authorship = "alem-official"
+contributor = "Alem Research maintainers"
+release_version = "0.1.0"
+release_digest = "1cecdfcc1834efa8fe1a8a97c29766bb8f8c5a744ccd75a9f46147e592d2fed1"
+service_checks = ["https://api.semanticscholar.org/graph/v1/paper/search?query=health&limit=1"]
+configuration_instructions = "SEMANTIC_SCHOLAR_API_KEY is optional; configure one for higher rate limits."
 
 [[integrations]]
 id = "feynman"
@@ -39,12 +53,17 @@ cost = "upstream model-provider dependent"
 authentication = "provider-dependent"
 privacy = "Queries and artifacts may reach the configured model and research providers."
 notes = "Workspace-local pinned CLI bridge; telemetry defaults off and execution requires approval."
+acceptance = "candidate"
+authorship = "alem-official"
+contributor = "Alem Research maintainers"
+required_runtimes = [".alem/tools/feynman/node_modules/.bin/feynman"]
+configuration_instructions = "This adapter remains a candidate until its upstream runtime can be managed reproducibly by Alem."
 
 [[integrations]]
 id = "orchestra-research-skills"
 name = "Orchestra Research skills"
 kind = "assets"
-status = "adapted"
+status = "contract-tested"
 trust = "verified"
 plugin_id = "community.orchestra-research-skills"
 upstream_id = "orchestra-ai-research-skills"
@@ -53,6 +72,11 @@ cost = "free-open-source"
 authentication = "none"
 privacy = "Local instructions; individual tools mentioned by a skill have their own policies."
 notes = "Six reviewed, namespaced assets are available to lazy context routing."
+acceptance = "accepted"
+authorship = "alem-official"
+contributor = "Alem Research maintainers; Orchestra Research credited in plugin metadata"
+release_version = "0.1.0"
+release_digest = "1d78f5f2e7dc8e5b7c570d4a32f459382e4e9ffdc914cfeb290f5295a01d9e18"
 
 [[integrations]]
 id = "wenyu-research-catalog"
@@ -67,6 +91,11 @@ cost = "free-open-source"
 authentication = "none"
 privacy = "Offline catalog lookup."
 notes = "Discovery metadata only; referenced repositories require independent integration audits."
+acceptance = "accepted"
+authorship = "alem-official"
+contributor = "Alem Research maintainers; Wenyu Chiou credited in plugin metadata"
+release_version = "0.1.0"
+release_digest = "faba454ee25f92d7046db88b2ced8cf718181e3b3b300a1b3cfe07482b31c5be"
 
 [[integrations]]
 id = "awesome-research-tools-catalog"
@@ -81,6 +110,11 @@ cost = "free-open-source"
 authentication = "none"
 privacy = "Offline catalog lookup."
 notes = "Discovery leads only; linked tools are not trusted, installed, or endorsed."
+acceptance = "accepted"
+authorship = "alem-official"
+contributor = "Alem Research maintainers; upstream list attribution is recorded in plugin metadata"
+release_version = "0.1.0"
+release_digest = "07aadeed1d041f0aa962f7d9ca0938339a9ba32b36788ce4f109bb9f81aae040"
 
 [[integrations]]
 id = "crossref"
@@ -93,6 +127,8 @@ cost = "free-service"
 authentication = "none"
 privacy = "Metadata queries would be sent to api.crossref.org when integrated."
 notes = "Candidate integration; no executable Alem adapter exists yet."
+acceptance = "candidate"
+authorship = "unknown"
 
 [[integrations]]
 id = "arxiv"
@@ -105,6 +141,8 @@ cost = "free-service"
 authentication = "none"
 privacy = "Queries would be sent to export.arxiv.org when integrated."
 notes = "Candidate integration; no executable Alem adapter exists yet."
+acceptance = "candidate"
+authorship = "unknown"
 
 [[integrations]]
 id = "pubmed"
@@ -117,6 +155,8 @@ cost = "free-service"
 authentication = "optional API key"
 privacy = "Queries would be sent to NCBI when integrated."
 notes = "Candidate integration; no executable Alem adapter exists yet."
+acceptance = "candidate"
+authorship = "unknown"
 
 [[integrations]]
 id = "europe-pmc"
@@ -129,6 +169,8 @@ cost = "free-service"
 authentication = "none"
 privacy = "Queries would be sent to Europe PMC when integrated."
 notes = "Candidate integration; no executable Alem adapter exists yet."
+acceptance = "candidate"
+authorship = "unknown"
 
 [[integrations]]
 id = "zotero"
@@ -141,6 +183,8 @@ cost = "free-open-source-client; hosted storage limits vary"
 authentication = "optional API key"
 privacy = "Depends on whether local or hosted Zotero is selected."
 notes = "Candidate integration; external writes will require a dedicated human gate."
+acceptance = "candidate"
+authorship = "unknown"
 
 [[integrations]]
 id = "local-pdf-extraction"
@@ -153,3 +197,5 @@ cost = "local dependency; implementation license must be compatible"
 authentication = "none"
 privacy = "Local processing."
 notes = "PyMuPDF licensing was identified as a concern; select and audit an implementation before adaptation."
+acceptance = "candidate"
+authorship = "unknown"

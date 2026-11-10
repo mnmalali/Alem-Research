@@ -1,32 +1,54 @@
 # Alem 1.0 validation report
 
-Validation date: 2026-11-03 (Asia/Dubai)
+Validation date: 2026-11-10 (Asia/Dubai)
 Host exercised: Windows 11, Python 3.14.0
-Scope: local 1.0 core, context, workflow, artifact, integration, and plugin acceptance checks
+Scope: accepted-tool bootstrap, schema-3 release reconciliation, readiness, routing, and the
+existing core, context, workflow, artifact, integration, and plugin checks
 
-## Automated checks
+## Current unified-tool acceptance checks
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Python compilation | Passed | `python -m compileall -q src` |
-| Test suite | Passed, 50; skipped, 1 | `.alem/venv/Scripts/python -m pytest -q` |
-| Core and CLI tests | Passed | Containment, setup/adapters, project/export privacy, knowledge, CLI/starter |
-| Extension tests | Passed, 21 | Manifests, providers, approvals, lifecycle, dependencies, assets, routing, rollback |
-| Context scaling | Passed | Adding 120 skills still generated one startup adapter in lazy mode |
-| Contract and artifact tests | Passed | JSON contract rejection and artifact tamper detection |
-| Workflow state and gates | Passed | Resume, expected outputs, approval blocking, completion |
-| Integration consistency | Passed, 12 records | Schema-2 fixture and `alem integration validate` |
-| Bundled workflow validation | Passed | Full lifecycle, literature review, and research design |
-| Ruff | Passed | Workspace-local Ruff 0.17.3: `python -m ruff check .` |
-| Repository whitespace | Passed | `git diff --check` |
-| Health check | Passed, no warnings | `.\alem.ps1 health --strict` |
-| Package dependency check | Passed | `python -m pip check` |
-| Wheel build | Passed | `alem_research-1.0.0-py3-none-any.whl` |
+| Full test suite | Passed, 59; skipped, 1 | `.alem/venv/Scripts/python.exe -m pytest -q -p no:cacheprovider` |
+| Ruff | Passed | `.alem/venv/Scripts/python.exe -m ruff check .` |
+| Clean bootstrap dependency regression | Passed | Bootstrap test verifies `PyYAML` and `jsonschema` are installed through `.alem/venv/Scripts/python.exe` before Alem imports `workflows.py` |
+| Setup | Passed, exit 0 | `.\alem.ps1 setup --create-venv`; five accepted releases already-current/provisioned; two catalog community candidates remained unprovisioned |
+| Strict health | Passed, exit 0 | `.\alem.ps1 health --strict` |
+| CLI help | Passed, exit 0 | `.\alem.ps1 --help` |
+| Registry validation | Passed, 12 records | `.\alem.ps1 integration validate --json`; schema 3, `valid: true`, no errors |
+| Update reconciliation | Passed, idempotent | `.\alem.ps1 update --json`; 5 accepted, 5 already current, 7 candidates untouched, 0 failed |
+| Tool readiness | Passed, truthful status | `.\alem.ps1 tools list`; all five accepted tools remained available; three local assets/catalogs were ready; two hosted API checks were `service-unavailable` because this host could not reach them |
+| Windows/Linux/macOS clean launcher smoke | Configured; hosted workflow not yet run | `.github/workflows/ci.yml` tests setup, strict health, and help before developer dependency installation |
+| Tagged source release | Configured; no release tag was published during this task | `.github/workflows/release.yml` checks the tag/version and reruns lint, tests, and registry validation |
 
 The skipped test attempts to create a symbolic link and verify export rejection. Windows denied link
-creation to the current non-elevated account (`WinError 1314`); the same production path also rejects
-Windows junctions/reparse points, and the test will execute on symlink-capable CI hosts. The suite
-run from `.alem/venv` had no unrelated global pytest-plugin warnings.
+creation to the current non-elevated account (`WinError 1314`). The full suite required normal
+Windows temporary-directory access because this host's sandbox ACL blocks pytest fixtures. The
+launcher setup succeeded and installed/verified dependencies in `.alem/venv`; pip printed
+non-blocking warnings that it could not remove several temporary directories under the host's
+`AppData/Local/Temp` ACL.
+
+The setup command was exercised in the existing checkout rather than a freshly cloned directory.
+The unit test simulates creation of a new Windows venv, and CI now performs the launcher sequence on
+clean runners. Run that hosted matrix before making cross-platform compatibility claims.
+
+## Reproducible Windows PowerShell first run
+
+```powershell
+git clone https://github.com/mnmalali/Alem-Research.git
+Set-Location Alem-Research
+.\alem.ps1 setup --create-venv
+.\alem.ps1 health --strict
+.\alem.ps1 --help
+.\alem.ps1 tools list
+.\alem.ps1 update
+```
+
+`setup --create-venv` seeds the exact interpreter selected by the launcher. `tools list` reports
+hosted-service failures without removing the accepted tools. `update` reconciles accepted versions
+in the checkout already present; it does not self-update Alem core.
+
+## Historical validation details (2026-11-03)
 
 ## Plugin acceptance demonstration
 
@@ -87,4 +109,4 @@ an expected output, an approval block, a recorded approver/decision, resume, and
 
 Follow [`manual-validation.md`](manual-validation.md) before making platform- or client-specific
 claims beyond the recorded Windows checks. The configured GitHub Actions matrix runs Python 3.11
-and 3.13 on Windows, Linux, and macOS after upload.
+and 3.13 on Windows, Linux, and macOS when a pull request is opened or a change is pushed to `main`.

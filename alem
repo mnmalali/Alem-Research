@@ -2,6 +2,17 @@
 set -eu
 
 ALEM_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ "${1:-}" = "setup" ]; then
+  case " $* " in
+    *" --create-venv "*)
+      ALEM_BOOTSTRAP_PYTHON="${PYTHON:-python3}"
+      if [ -x "$ALEM_ROOT/.alem/venv/bin/python" ]; then
+        ALEM_BOOTSTRAP_PYTHON="$ALEM_ROOT/.alem/venv/bin/python"
+      fi
+      "$ALEM_BOOTSTRAP_PYTHON" "$ALEM_ROOT/scripts/bootstrap_runtime.py" "$ALEM_ROOT"
+      ;;
+  esac
+fi
 if [ -x "$ALEM_ROOT/.alem/venv/bin/python" ]; then
   ALEM_PYTHON="$ALEM_ROOT/.alem/venv/bin/python"
 else

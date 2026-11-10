@@ -8,23 +8,37 @@ evidence, or writing workflows from operating.
 Run:
 
 ```bash
+./alem tools list
+./alem tools status [id]
+./alem tools doctor [id]
 ./alem integration list
 ```
 
-The command reads `integrations/registry.toml`, which distinguishes bundled plugins from planned
-work and separates integration maturity from trust. Validate consistency with:
+`integrations/registry.toml` is the maintainer-controlled release registry. Schema 3 distinguishes
+acceptance, authorship, implementation maturity, and readiness. Validate it against catalogue
+sources, versions, hashes, capabilities, and dependencies with:
 
 ```bash
 ./alem integration validate
 ```
 
-OpenAlex and Semantic Scholar provide interchangeable network search. Feynman is an opt-in external
-research-agent bridge. Orchestra contributes lazy-indexed skill assets, while the Wenyu and Awesome
-catalogs provide offline discovery only. A catalog result is not an installed integration.
+OpenAlex, Semantic Scholar, Orchestra assets, Wenyu's catalog, and the Awesome Research Tools
+catalog are currently accepted and provisioned through the common manager. Feynman remains a
+candidate because its upstream runtime is not yet reproducibly managed by Alem. Candidate records
+and catalog results are visible for discovery but are never automatic install targets.
+
+An accepted row pins its catalogue version and SHA-256 source-tree digest. Legacy schema 1 and 2
+rows migrate as candidates. Normal setup and `alem update` reconcile accepted releases only;
+`alem update` does not update the Alem core package or repository checkout. Reconciliation stores
+author and release provenance in `.alem/state/plugins.json`, retains prior releases for rollback,
+and reports failures without erasing working installations. `alem plugin rollback <id>` restores a
+retained release and pins it; `alem plugin unpin <id>` lets future reconciliation advance it.
 
 Maturity values are `discovered`, `assessed`, `adapted`, `contract-tested`, `workflow-proven`,
 `blocked`, and `deprecated`. Trust is tracked separately as `official`, `verified`, `unverified`,
-or `not-executable`.
+or `not-executable`. Authorship only identifies who contributed the adapter. Acceptance means a
+maintainer reviewed the exact release for distribution; it does not mean the plugin has no
+external prerequisites or that its research claims are endorsed.
 
 ## Cost and privacy categories
 
@@ -41,8 +55,14 @@ topics or unpublished data without reviewing the service's terms and privacy pol
 
 ## Failure handling
 
-The capability router tries only installed, enabled, execution-approved, compatible providers. A
-provider timeout, invalid response, missing optional credential, or rate-limit response is recorded
-and permits a configured fallback. It never fabricates an empty search result as a successful
-response. Inputs and outputs with registered capability contracts are schema-validated. Workflows
-must record database, query, retrieval date, and provider metadata.
+Readiness states are `ready`, `needs-configuration`, `missing-hardware`, `missing-runtime`,
+`service-unavailable`, `unsupported-platform`, and `error`. A blocked accepted tool remains
+available in status output. `tools configure` prints variable names and instructions without
+reading or storing secrets. Readiness checks use bounded, non-authenticated service checks and do
+not invoke plugin code.
+
+The capability router prefers task-compatible ready providers. A provider timeout, invalid
+response, missing required credential, or rate-limit response is recorded and permits a configured
+contract-compatible fallback. If no provider can run, Alem returns actionable diagnostics instead
+of fabricating an empty search result. Inputs and outputs with registered capability contracts are
+schema-validated. Workflows must record database, query, retrieval date, and provider metadata.
