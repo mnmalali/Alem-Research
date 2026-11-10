@@ -7,3 +7,6 @@
 *.sh text eol=lf
 alem text eol=lf
 *.ps1 text eol=crlf
+plugins/community/orchestra-research-skills/** -text
+plugins/community/wenyu-research-catalog/** -text
+plugins/community/awesome-research-tools-catalog/** -text

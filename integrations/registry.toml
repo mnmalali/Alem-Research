@@ -76,7 +76,7 @@ acceptance = "accepted"
 authorship = "alem-official"
 contributor = "Alem Research maintainers; Orchestra Research credited in plugin metadata"
 release_version = "0.1.0"
-release_digest = "1d78f5f2e7dc8e5b7c570d4a32f459382e4e9ffdc914cfeb290f5295a01d9e18"
+release_digest = "9acdf89650cc4bc725edf99494bd8ab062b6b9dae364e9b24c85e89be53fed27"
 
 [[integrations]]
 id = "wenyu-research-catalog"
@@ -95,7 +95,7 @@ acceptance = "accepted"
 authorship = "alem-official"
 contributor = "Alem Research maintainers; Wenyu Chiou credited in plugin metadata"
 release_version = "0.1.0"
-release_digest = "faba454ee25f92d7046db88b2ced8cf718181e3b3b300a1b3cfe07482b31c5be"
+release_digest = "a1d9ff1542129ecf2184e5cdd458bd3e840504d239ba0e01c8a87d313c09753c"
 
 [[integrations]]
 id = "awesome-research-tools-catalog"
@@ -114,7 +114,7 @@ acceptance = "accepted"
 authorship = "alem-official"
 contributor = "Alem Research maintainers; upstream list attribution is recorded in plugin metadata"
 release_version = "0.1.0"
-release_digest = "07aadeed1d041f0aa962f7d9ca0938339a9ba32b36788ce4f109bb9f81aae040"
+release_digest = "4ab977968dbb6d1d38db38bd3f26dfa0f696cb8f72709190e389ba946a8ad52f"
 
 [[integrations]]
 id = "crossref"

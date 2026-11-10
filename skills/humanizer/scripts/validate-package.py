@@ -7,7 +7,6 @@ import json
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -15,7 +14,7 @@ def read_package_file(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except OSError as error:
-        raise SystemExit(f"Cannot read {path.relative_to(ROOT)}: {error}")
+        raise SystemExit(f"Cannot read {path.relative_to(ROOT)}: {error}") from None
 
 
 SKILL_PATH = ROOT / "SKILL.md"
@@ -25,13 +24,13 @@ CHANGELOG = read_package_file(ROOT / "CHANGELOG.md")
 try:
     PLUGIN = json.loads(read_package_file(ROOT / ".claude-plugin" / "plugin.json"))
 except json.JSONDecodeError as error:
-    raise SystemExit(f"Fix the JSON in .claude-plugin/plugin.json: {error}")
+    raise SystemExit(f"Fix the JSON in .claude-plugin/plugin.json: {error}") from None
 try:
     CURSOR_PLUGIN = json.loads(
         read_package_file(ROOT / ".cursor-plugin" / "plugin.json")
     )
 except json.JSONDecodeError as error:
-    raise SystemExit(f"Fix the JSON in .cursor-plugin/plugin.json: {error}")
+    raise SystemExit(f"Fix the JSON in .cursor-plugin/plugin.json: {error}") from None
 
 
 def require_match(match: re.Match[str] | None, message: str) -> re.Match[str]:
@@ -114,7 +113,8 @@ readme_patterns = dict(
 )
 if sorted(readme_patterns) != pattern_numbers:
     raise SystemExit(
-        f"List patterns 1 through {pattern_count} once each in the README tables: {sorted(readme_patterns)}"
+        f"List patterns 1 through {pattern_count} once each in the README tables: "
+        f"{sorted(readme_patterns)}"
     )
 renamed = [
     f"{number}: {readme_patterns[number]!r} should be {name!r}"
