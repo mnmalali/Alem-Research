@@ -160,17 +160,45 @@ def _source_digest(workspace: Workspace) -> str:
     return hasher.hexdigest()
 
 
+def _frontmatter_value(text: str, key: str) -> str | None:
+    """Read a scalar or block-scalar value from a skill's YAML frontmatter.
+
+    Skill metadata is intentionally kept dependency-free, but descriptions in
+    the Agent Skills format commonly use ``|`` or ``>`` block scalars. Treat
+    their indented continuation lines as the value instead of indexing the
+    scalar marker itself.
+    """
+
+    lines = text[:5000].splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            break
+        match = re.match(rf"^{re.escape(key)}:\s*(.*)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value in {"|", "|-", "|+", ">", ">-", ">+", ""}:
+            continuation: list[str] = []
+            for child in lines[index + 1 :]:
+                if child.strip() == "---" or (
+                    child and not child[0].isspace()
+                ):
+                    break
+                if child.strip():
+                    continuation.append(child.strip())
+            return " ".join(continuation)
+        return value.strip("\"'")
+    return None
+
+
 def _skill_header(path: Path) -> tuple[str, str]:
     text = path.read_text(encoding="utf-8")
-    name_match = re.search(r"(?m)^name:\s*[\"']?(.+?)[\"']?\s*$", text[:5000])
-    description_match = re.search(
-        r"(?m)^description:\s*[\"']?(.+?)[\"']?\s*$", text[:5000]
-    )
-    name = name_match.group(1).strip() if name_match else path.parent.name
+    name = _frontmatter_value(text, "name") or path.parent.name
     description = _metadata_text(
-        description_match.group(1).strip()
-        if description_match
-        else f"Use the {name} research skill."
+        _frontmatter_value(text, "description")
+        or f"Use the {name} research skill."
     )
     return name, description
 

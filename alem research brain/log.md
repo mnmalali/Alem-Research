@@ -30,3 +30,14 @@ artifact or pages affected, and provenance or uncertainty when relevant.
   warnings, integration/workflow validation, dependency consistency, and a successful wheel build.
 - No academic research claim was promoted into the shared knowledge wiki; the durable technical
   decision and its limitations are maintained in repository architecture and release documents.
+
+## [2026-11-10] maintenance | Three user-selected writing/provenance skills added
+
+- `verified_evidence`: added `humanizer`, `academic-humanizer`, and the primary `remove-ai-marks`
+  skill from their pinned GitHub main-branch revisions under the canonical `skills/` tree.
+- Recorded upstream repositories, revisions, MIT license links, imported paths, and scope limits in
+  `docs/upstream-register.toml`.
+- Fixed Alem context metadata parsing for YAML block-scalar skill descriptions and added a regression
+  test; context rebuild and targeted searches now expose all three skills by their real descriptions.
+- The watermark repository's optional `clean-user-facing-text` companion was not imported; the
+  request was kept to three skills. No academic knowledge claim was promoted.

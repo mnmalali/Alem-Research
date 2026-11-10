@@ -131,6 +131,29 @@ def test_context_index_rebuilds_when_skill_metadata_changes(tmp_path: Path) -> N
     assert "Discover academic" in entry["description"]
 
 
+def test_context_index_reads_block_scalar_skill_descriptions(tmp_path: Path) -> None:
+    ws = workspace(tmp_path)
+    skill = ws.root / "skills" / "academic-humanizer" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\n"
+        "name: academic-humanizer\n"
+        "description: |\n"
+        "  Improve academic prose while preserving claims and citations.\n"
+        "license: MIT\n"
+        "---\n"
+        "# Academic humanizer\n",
+        encoding="utf-8",
+    )
+
+    index = build_context_index(ws)
+    entry = next(item for item in index["entries"] if item["id"] == "academic-humanizer")
+
+    assert entry["description"] == (
+        "Improve academic prose while preserving claims and citations."
+    )
+
+
 def test_artifact_registration_detects_tampering(tmp_path: Path) -> None:
     ws = workspace(tmp_path)
     artifact = ws.root / "projects/study/evidence.json"

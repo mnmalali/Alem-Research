@@ -1,5 +1,5 @@
 schema_version = 1
-retrieved_at = "2026-10-31"
+retrieved_at = "2026-11-10"
 retrieval_timezone = "Asia/Dubai"
 policy = "No upstream is a required Alem dependency. Mutable refs are discovery metadata only; revision is the reproducible audit pin."
 
@@ -82,3 +82,51 @@ adopt = ["candidate discovery", "research-lifecycle categories", "link-health id
 exclude = ["dependency", "security endorsement", "price claim", "third-party license inference"]
 source_files = ["README.md", "contributing.md", "LICENSE", ".github/workflows/link-check.yml"]
 notes = "CC0 covers the list contribution, not linked tools, trademarks, APIs, datasets, or service terms."
+
+[[upstreams]]
+id = "blader-humanizer"
+name = "Humanizer"
+kind = "repository"
+repository = "https://github.com/blader/humanizer"
+revision = "b48c832f0f809c1b5658edbb838c2521b72f2413"
+version = "4.0.0"
+license = "MIT"
+license_url = "https://github.com/blader/humanizer/blob/b48c832f0f809c1b5658edbb838c2521b72f2413/LICENSE"
+relationship = "vendored-skill"
+redistribution = "vendored"
+adopt = ["humanizer skill instructions"]
+exclude = ["upstream plugin runtime", "user-global installation"]
+source_files = ["skills/humanizer/SKILL.md", "skills/humanizer/LICENSE"]
+notes = "Imported into the canonical Alem skills tree at skills/humanizer from the pinned main-branch revision."
+
+[[upstreams]]
+id = "aiscientists-dev-academic-humanizer"
+name = "Academic Humanizer"
+kind = "repository"
+repository = "https://github.com/AIScientists-Dev/academic-humanizer"
+revision = "94b88b23703bed7df507acae7d6d5876209a0cdf"
+version = "0.3.3"
+license = "MIT"
+license_url = "https://github.com/AIScientists-Dev/academic-humanizer/blob/94b88b23703bed7df507acae7d6d5876209a0cdf/LICENSE"
+relationship = "vendored-skill"
+redistribution = "vendored"
+adopt = ["academic humanizer skill instructions"]
+exclude = ["upstream plugin runtime", "user-global installation"]
+source_files = ["skills/academic-humanizer/SKILL.md", "skills/academic-humanizer/LICENSE"]
+notes = "Imported into the canonical Alem skills tree at skills/academic-humanizer from the pinned main-branch revision."
+
+[[upstreams]]
+id = "guillaumemeyer-watermarks-remover"
+name = "Watermarks Remover"
+kind = "repository"
+repository = "https://github.com/guillaumemeyer/watermarks-remover"
+revision = "5a62be6338d2812372b1da440e55c82922f97d53"
+version = "main"
+license = "MIT"
+license_url = "https://github.com/guillaumemeyer/watermarks-remover/blob/5a62be6338d2812372b1da440e55c82922f97d53/LICENSE"
+relationship = "vendored-skill"
+redistribution = "vendored"
+adopt = ["remove-ai-marks skill instructions"]
+exclude = ["watermark-removal service", "optional heavy backends", "user-global installation"]
+source_files = ["skills/remove-ai-marks/SKILL.md", "skills/remove-ai-marks/references/*"]
+notes = "Imported the repository's primary remove-ai-marks skill into the canonical Alem skills tree. The skill remains service-backed and does not bundle the upstream cleaning service."
