@@ -27,6 +27,9 @@ allow_expansion = true
 default = "org.alem.openalex"
 fallbacks = ["org.alem.semantic-scholar"]
 
+[capabilities.model_completion]
+default = "org.alem.model-gateway"
+
 [agents]
 canonical_skills = "skills"
 codex_skills = ".agents/skills"

@@ -476,6 +476,11 @@ def _credentials(
     capability_version: str,
     provider: str | None,
 ) -> dict[str, str]:
+    if capability == "model_completion":
+        # The core model gateway resolves its own environment/workspace-local
+        # credential with provider-specific precedence.  No secret crosses a
+        # plugin process boundary for this built-in capability.
+        return {}
     candidates = manager.registry(enabled_only=True).resolve(
         capability, provider, capability_version=capability_version
     )

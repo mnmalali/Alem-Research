@@ -1006,6 +1006,20 @@ class PluginManager:
         contract = ContractRegistry(self.workspace).get(capability, capability_version)
         if contract is not None:
             contract.validate_input(payload)
+        # The model gateway is a trusted core capability, not a plugin.  It
+        # still enters through this same contract-validation and invocation
+        # boundary, while provider adapters remain outside the academic-search
+        # and Feynman plugin registries.
+        if capability == "model_completion" and provider in {None, "org.alem.model-gateway"}:
+            from alem.models import ModelGateway
+
+            response = ModelGateway(self.workspace).invoke(payload, operation=operation)
+            if contract is not None:
+                contract.validate_output(response.output)
+            metadata = dict(response.metadata)
+            metadata["provider"] = "org.alem.model-gateway"
+            metadata["capability"] = capability
+            return ExecutionResponse(response.output, metadata)
         state = self._load_state()
         readiness_by_plugin: dict[str, dict[str, Any]] = {}
         try:
@@ -1196,3 +1210,14 @@ class PluginManager:
             for failure in failures
         )
         raise RoutingError(f"all providers failed for {capability!r}: {summary}")
+
+    def invoke_model_stream(self, payload, *, cancel=None):
+        """Stream a core model capability through the same contract boundary."""
+        from alem.contracts import ContractRegistry
+        from alem.models import ModelGateway
+
+        contract = ContractRegistry(self.workspace).get("model_completion", "1.0")
+        if contract is not None:
+            contract.validate_input(payload)
+        gateway = ModelGateway(self.workspace)
+        yield from gateway.stream(payload["messages"], model=payload.get("model"), cancel=cancel)

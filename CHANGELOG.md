@@ -3,6 +3,30 @@
 All notable changes are recorded here. Alem uses semantic versioning for releases and separately
 versions its extension API and persisted schemas.
 
+## Unreleased
+
+### Added
+
+- Keyboard-driven model picker with provider navigation, guided API-key setup,
+  live local model discovery, and persisted selection in the research TUI.
+
+- Persistent Textual research interface with composer, activity stream, model
+  selection, provider status, cancellation, and workflow command dispatch.
+
+- Purple/amber owl terminal dashboard with safe TTY, `NO_COLOR`, `TERM=dumb`,
+  Windows, narrow-column, and legacy-encoding fallbacks.
+- Workspace-local `model_completion` capability contract and provider-neutral
+  gateway for tested OpenAI-compatible and Anthropic API-key/local protocols.
+- `alem model` commands for provider/model catalog inspection, secure API-key
+  setup, selection, status, diagnostics, endpoint configuration, and fallbacks.
+- Explicit catalogued/unsupported provider states so ChatGPT/Claude subscription
+  OAuth is not confused with API access or emulated through private flows.
+
+### Documentation
+
+- Added CLI dashboard, provider setup, support matrix, local endpoint, and model
+  security guides.
+
 ## 1.0.0 — 2026-11-03
 
 ### Added

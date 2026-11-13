@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "capability": "model_completion",
+  "version": "1.0",
+  "input": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["messages"],
+    "properties": {
+      "model": {"type": "string", "minLength": 3},
+      "messages": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["role", "content"],
+          "properties": {
+            "role": {"type": "string", "minLength": 1},
+            "content": {}
+          },
+          "additionalProperties": true
+        }
+      },
+      "tools": {"type": "array"},
+      "temperature": {"type": "number", "minimum": 0},
+      "max_tokens": {"type": "integer", "minimum": 1},
+      "timeout": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "additionalProperties": false
+  },
+  "output": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["content", "model", "provider", "finish_reason", "tool_calls", "usage"],
+    "properties": {
+      "content": {"type": "string"},
+      "model": {"type": "string"},
+      "provider": {"type": "string"},
+      "finish_reason": {},
+      "tool_calls": {"type": "array"},
+      "usage": {"type": "object"}
+    },
+    "additionalProperties": false
+  }
+}

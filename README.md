@@ -115,6 +115,9 @@ git clone https://github.com/mnmalali/Alem-Research.git alem-research
 cd alem-research
 .\alem.ps1 setup --create-venv
 .\alem.ps1 health --strict
+.\alem.ps1
+.\alem.ps1 model providers
+.\alem.ps1 model list
 .\alem.ps1 project create "My research topic"
 .\alem.ps1 context plan "Find papers and verify the citations"
 ```
@@ -126,9 +129,20 @@ git clone https://github.com/mnmalali/Alem-Research.git alem-research
 cd alem-research
 ./alem setup --create-venv
 ./alem health --strict
+./alem
+./alem model providers
+./alem model list
 ./alem project create "My research topic"
 ./alem context plan "Find papers and verify the citations"
 ```
+
+With both input and output attached to a terminal, `alem` opens a persistent
+purple pixel-owl research interface. Type a question and press Enter; use
+`/model` or Ctrl+M to open the provider/model picker and `/exit` to leave. Redirected and CI
+invocations keep the predictable help output. Model setup, provider support states, local endpoints, credentials, and
+the API-key versus subscription boundary are documented in
+[`docs/cli-dashboard.md`](docs/cli-dashboard.md) and
+[`docs/model-providers.md`](docs/model-providers.md).
 
 Setup writes mutable state and optional dependencies beneath `.alem/` in the checkout. It does not
 modify `~/.codex`, `~/.claude`, `~/.agents`, or a global Python or Node environment.

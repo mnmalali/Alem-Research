@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
+import os
 import sys
+import textwrap
 import tomllib
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -26,6 +29,20 @@ from alem.extensions import ExtensionError
 from alem.health import run_health_checks
 from alem.integrations import find_integration, load_integrations, validate_integrations
 from alem.knowledge import update_index
+from alem.models import (
+    ModelConfigStore,
+    ModelError,
+    configure_provider,
+    get_provider,
+    list_models,
+    model_doctor,
+    model_status,
+    remove_local_credential,
+    save_api_key,
+    set_default_model,
+    set_model_fallbacks,
+    validate_login_method,
+)
 from alem.projects import create_project, export_project
 from alem.setup_workspace import initialize_workspace, sync_all_skill_adapters
 from alem.workflows import (
@@ -100,8 +117,7 @@ def _cmd_setup(arguments: argparse.Namespace, workspace: Workspace) -> int:
             print(f"  FAILED {item['id']}: {item['reason']}")
         if arguments.create_venv:
             print(
-                "Core dependencies were checked in .alem/venv, "
-                "the launcher's runtime interpreter."
+                "Core dependencies were checked in .alem/venv, the launcher's runtime interpreter."
             )
     return 1 if result["plugins"]["reconciliation"]["failed"] else 0
 
@@ -139,6 +155,190 @@ def _cmd_health(arguments: argparse.Namespace, workspace: Workspace) -> int:
         return 1
     if arguments.strict and any(check.status == "warn" for check in report.checks):
         return 1
+    return 0
+
+
+def _cmd_dashboard(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    from alem.terminal.dashboard import render_dashboard
+
+    render_dashboard(workspace, no_color=arguments.no_color)
+    return 0
+
+
+def _cmd_model_list(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    values = list_models(workspace, arguments.provider)
+    if arguments.available:
+        values = [item for item in values if item["readiness"] in {"configured", "local"}]
+    if arguments.json:
+        _print_json({"models": values})
+        return 0
+    if not values:
+        print("No configured models are available; use `alem model providers` for setup guidance.")
+        return 0
+    print("MODEL  READINESS  SOURCE")
+    for item in values:
+        print(f"{item['provider']}/{item['id']}  {item['readiness']}  {item['source']}")
+    return 0
+
+
+def _cmd_model_providers(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    status = model_status(workspace)
+    if arguments.json:
+        _print_json({"providers": status["providers"]})
+        return 0
+    print("PROVIDER  SUPPORT  AUTH  READINESS")
+    for item in status["providers"]:
+        print(
+            f"{item['id']}  {item['support_state']}  {','.join(item['auth_methods'])}  "
+            f"{item['readiness']}"
+        )
+        if item["notes"]:
+            print(f"  {item['notes']}")
+    return 0
+
+
+def _api_key_from_stdin_or_prompt(arguments: argparse.Namespace, provider: str) -> str:
+    if arguments.api_key_stdin:
+        value = sys.stdin.read().strip()
+    elif getattr(sys.stdin, "isatty", lambda: False)():
+        value = getpass.getpass(f"API key for {provider} (input hidden): ").strip()
+    else:
+        raise ModelError(
+            "non-interactive login requires --api-key-stdin; secrets are never CLI arguments"
+        )
+    if not value:
+        raise ModelError("API key input was empty")
+    return value
+
+
+def _cmd_model_login(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    if not arguments.provider:
+        return _cmd_model_providers(arguments, workspace)
+    spec = validate_login_method(arguments.provider, arguments.method)
+    if arguments.method == "api-key":
+        save_api_key(workspace, spec.id, _api_key_from_stdin_or_prompt(arguments, spec.id))
+    result = {"provider": spec.id, "method": arguments.method, "status": "configured"}
+    if arguments.json:
+        _print_json(result)
+    else:
+        print(f"Configured {spec.name} with {arguments.method}; secret value was not displayed.")
+    return 0
+
+
+def _cmd_model_logout(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    get_provider(arguments.provider)
+    removed = remove_local_credential(workspace, arguments.provider)
+    result = {"provider": arguments.provider, "removed_local_credential": removed}
+    if arguments.json:
+        _print_json(result)
+    else:
+        message = (
+            "Removed the workspace-local credential."
+            if removed
+            else "No workspace-local credential was stored."
+        )
+        print(f"{arguments.provider}: {message}")
+        spec = get_provider(arguments.provider)
+        if any(os.environ.get(name) for name in spec.env_vars):
+            print("An environment credential is still active and was not changed.")
+    return 0
+
+
+def _cmd_model_set(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    set_default_model(workspace, arguments.model_ref)
+    result = {"current": arguments.model_ref}
+    _print_json(result) if arguments.json else print(f"Default model set to {arguments.model_ref}")
+    return 0
+
+
+def _cmd_model_current(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    current = model_status(workspace)["current"]
+    result = {"current": current}
+    if arguments.json:
+        _print_json(result)
+    else:
+        print(current or "No default model selected. Run `alem model set PROVIDER/MODEL`.")
+    return 0
+
+
+def _cmd_model_test(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    from alem.models import ModelGateway
+
+    result = ModelGateway(workspace).test_connection(arguments.model_ref)
+    _print_json(result) if arguments.json else print(
+        f"{result['provider']} reachable at {result['base_url']}"
+    )
+    return 0
+
+
+def _cmd_model_status(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    result = model_status(workspace)
+    if arguments.json:
+        _print_json(result)
+        return 0
+    current = result["current"] or "not selected"
+    print(f"Current model: {current}")
+    for item in result["providers"]:
+        print(f"{item['id']}: {item['readiness']} ({item['credential_source']})")
+    return 0
+
+
+def _cmd_model_doctor(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    result = model_doctor(workspace)
+    if arguments.json:
+        _print_json(result)
+        return 0
+    for check in result["checks"]:
+        print(f"[{check['status'].upper()}] {check['provider']}: {check['message']}")
+    return 0
+
+
+def _cmd_model_configure(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    if not arguments.provider:
+        raise ModelError(
+            "model configure requires a provider; use `alem model providers` to inspect options"
+        )
+    configure_provider(
+        workspace,
+        arguments.provider,
+        base_url=arguments.base_url,
+        model=arguments.model,
+    )
+    if arguments.api_key_stdin:
+        save_api_key(workspace, arguments.provider, sys.stdin.read().strip())
+    result = model_status(workspace)
+    selected = next(item for item in result["providers"] if item["id"] == arguments.provider)
+    if arguments.json:
+        _print_json(selected)
+    else:
+        print(f"Configured {arguments.provider}: {selected['readiness']}")
+        if selected["base_url"]:
+            print(f"Base URL: {selected['base_url']}")
+    return 0
+
+
+def _cmd_model_defaults(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    value = ModelConfigStore(workspace).read()
+    result = {"current": value.get("current"), "defaults": value.get("defaults", {})}
+    _print_json(result) if arguments.json else print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+def _cmd_model_fallbacks(arguments: argparse.Namespace, workspace: Workspace) -> int:
+    store = ModelConfigStore(workspace)
+    value = store.read()
+    if arguments.set_models:
+        set_model_fallbacks(workspace, arguments.capability, arguments.set_models)
+        store = ModelConfigStore(workspace)
+        value = store.read()
+    result = {
+        "capability": arguments.capability,
+        "fallbacks": value.get("fallbacks", {}).get(arguments.capability, []),
+    }
+    if arguments.json:
+        _print_json(result)
+    else:
+        print(", ".join(result["fallbacks"]) or "No model fallbacks configured")
     return 0
 
 
@@ -197,8 +397,7 @@ def _cmd_project_export(arguments: argparse.Namespace, workspace: Workspace) -> 
     print(f"Exported: {destination.relative_to(workspace.root)}")
     if arguments.include_sensitive:
         print(
-            "WARNING: sensitive-file exclusions were disabled; "
-            "inspect the archive before sharing"
+            "WARNING: sensitive-file exclusions were disabled; inspect the archive before sharing"
         )
     return 0
 
@@ -328,8 +527,7 @@ def _cmd_workflow_runs(arguments: argparse.Namespace, workspace: Workspace) -> i
     else:
         for run in values:
             print(
-                f"{run['id']}  {run['workflow']}  {run['state']}  "
-                f"{run.get('current_step') or '-'}"
+                f"{run['id']}  {run['workflow']}  {run['state']}  {run.get('current_step') or '-'}"
             )
     return 0
 
@@ -523,10 +721,7 @@ def _cmd_artifact_list(arguments: argparse.Namespace, workspace: Workspace) -> i
         print("No artifacts registered")
     else:
         for record in records:
-            print(
-                f"{record.id}  {record.artifact_type}  "
-                f"{record.evidence_status}  {record.path}"
-            )
+            print(f"{record.id}  {record.artifact_type}  {record.evidence_status}  {record.path}")
     return 0
 
 
@@ -547,18 +742,53 @@ def _add_common_json(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
 
 
+HELP_DASHBOARD = textwrap.dedent(
+    """
+
+    Research Workflows (displayed shortcuts; inspect `alem workflow list` for local specs)
+      /deepresearch  planned, source-heavy investigation with citation checks
+      /lit           literature review and consensus/disagreement mapping
+      /review        critique a paper or draft and provide a revision plan
+      /audit         compare paper claims with public code
+      /replicate     plan reproducibility; run only after environment approval
+      /recipe        ranked, evidence-backed ML training recipes
+      /compare       compare sources, models, or methods with an evidence matrix
+      /draft         turn verified research into a structured draft
+      /autoresearch  bounded experiment loop with explicit benchmark constraints
+      /summarize     summarize a source, repository, or PDF with provenance
+
+    Models & Providers
+      model list, model providers, model login, model set, model current
+      model status, model doctor, model configure, model defaults, model fallbacks
+
+    Workspace & Tools
+      setup, health, project, workflow, context, artifact, integration, plugin
+
+    Secrets stay local by default. ChatGPT/Claude subscriptions are not API keys;
+    unsupported subscription OAuth is reported explicitly rather than emulated.
+    """
+).strip("\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alem",
         description="Your research. Your knowledge. Your AI research workspace.",
+        epilog=HELP_DASHBOARD,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=f"alem {__version__}")
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="disable ANSI colour and use plain terminal output",
+    )
     parser.add_argument(
         "--workspace",
         type=Path,
         help="workspace root or a path inside it (default: current directory)",
     )
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command")
 
     setup = commands.add_parser(
         "setup",
@@ -578,6 +808,91 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--strict", action="store_true", help="treat warnings as failures")
     _add_common_json(health)
     health.set_defaults(handler=_cmd_health)
+
+    model = commands.add_parser(
+        "model",
+        help="inspect providers, credentials, model selection, and gateway readiness",
+        description=(
+            "Manage provider-neutral model configuration. "
+            "API keys and subscription OAuth are separate."
+        ),
+    )
+    model_commands = model.add_subparsers(dest="model_command", required=True)
+    model_list = model_commands.add_parser("list", help="list catalogued model IDs")
+    model_list.add_argument("--provider")
+    model_list.add_argument(
+        "--available", action="store_true", help="show configured/local models only"
+    )
+    _add_common_json(model_list)
+    model_list.set_defaults(handler=_cmd_model_list)
+    model_providers = model_commands.add_parser(
+        "providers", help="list provider support and auth states"
+    )
+    _add_common_json(model_providers)
+    model_providers.set_defaults(handler=_cmd_model_providers)
+    model_login = model_commands.add_parser("login", help="configure a documented provider login")
+    model_login.add_argument("provider", nargs="?")
+    model_login.add_argument("--method", choices=["oauth", "api-key"], default="api-key")
+    model_login.add_argument(
+        "--api-key-stdin",
+        action="store_true",
+        help="read the API key from stdin without echoing it or storing it in shell history",
+    )
+    _add_common_json(model_login)
+    model_login.set_defaults(handler=_cmd_model_login)
+    model_logout = model_commands.add_parser(
+        "logout", help="remove a workspace-local provider credential"
+    )
+    model_logout.add_argument("provider")
+    _add_common_json(model_logout)
+    model_logout.set_defaults(handler=_cmd_model_logout)
+    model_set = model_commands.add_parser(
+        "set", help="select PROVIDER/MODEL as the workspace default"
+    )
+    model_set.add_argument("model_ref")
+    _add_common_json(model_set)
+    model_set.set_defaults(handler=_cmd_model_set)
+    model_current = model_commands.add_parser("current", help="show the selected model")
+    _add_common_json(model_current)
+    model_current.set_defaults(handler=_cmd_model_current)
+    model_test = model_commands.add_parser("test", help="test the selected provider endpoint")
+    model_test.add_argument("model_ref", nargs="?")
+    _add_common_json(model_test)
+    model_test.set_defaults(handler=_cmd_model_test)
+    model_status_parser = model_commands.add_parser("status", help="show offline model readiness")
+    _add_common_json(model_status_parser)
+    model_status_parser.set_defaults(handler=_cmd_model_status)
+    model_doctor_parser = model_commands.add_parser(
+        "doctor", help="diagnose model configuration without sending prompts"
+    )
+    _add_common_json(model_doctor_parser)
+    model_doctor_parser.set_defaults(handler=_cmd_model_doctor)
+    model_configure = model_commands.add_parser(
+        "configure", help="set an endpoint or workspace model alias"
+    )
+    model_configure.add_argument("provider", nargs="?")
+    model_configure.add_argument("--base-url", help="HTTPS endpoint or HTTP loopback URL")
+    model_configure.add_argument("--model", help="add an explicit model ID to the local catalog")
+    model_configure.add_argument(
+        "--api-key-stdin", action="store_true", help="read an API key from stdin"
+    )
+    _add_common_json(model_configure)
+    model_configure.set_defaults(handler=_cmd_model_configure)
+    model_defaults = model_commands.add_parser(
+        "defaults", help="show role defaults and the selected model"
+    )
+    model_defaults.add_argument("--show", action="store_true", help="show configured defaults")
+    _add_common_json(model_defaults)
+    model_defaults.set_defaults(handler=_cmd_model_defaults)
+    model_fallbacks = model_commands.add_parser(
+        "fallbacks", help="show or set capability model fallbacks"
+    )
+    model_fallbacks.add_argument("capability", nargs="?", default="model_completion")
+    model_fallbacks.add_argument(
+        "--set", dest="set_models", action="append", metavar="PROVIDER/MODEL"
+    )
+    _add_common_json(model_fallbacks)
+    model_fallbacks.set_defaults(handler=_cmd_model_fallbacks)
 
     config = commands.add_parser("config", help="validate workspace configuration")
     config_commands = config.add_subparsers(dest="config_command", required=True)
@@ -791,6 +1106,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     try:
         workspace = _workspace(arguments)
+        if arguments.command is None:
+            stdout_tty = getattr(sys.stdout, "isatty", lambda: False)()
+            stdin_tty = getattr(sys.stdin, "isatty", lambda: False)()
+            if stdout_tty and stdin_tty:
+                from alem.terminal.tui import AlemApp
+
+                previous_no_color = os.environ.get("NO_COLOR")
+                if arguments.no_color:
+                    os.environ["NO_COLOR"] = "1"
+                try:
+                    AlemApp(workspace, no_color=arguments.no_color).run()
+                finally:
+                    if arguments.no_color:
+                        if previous_no_color is None:
+                            os.environ.pop("NO_COLOR", None)
+                        else:
+                            os.environ["NO_COLOR"] = previous_no_color
+                return 0
+            parser.print_help()
+            return 0
         handler: Command = arguments.handler
         return handler(arguments, workspace)
     except (AlemError, ExtensionError, OSError, ValueError, tomllib.TOMLDecodeError) as exc:
